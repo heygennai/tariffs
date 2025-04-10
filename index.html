@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Flowchart</title>
+    <title>Interactive Flowchart with Simulation</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://unpkg.com/@material-ui/core@latest/umd/material-ui.production.min.css">
     <style>
@@ -49,11 +49,9 @@
             display: flex;
             gap: 8px;
         }
-        #top-buttons button {
-            padding: 6px 16px;
+        #top-buttons button, #menu-button {
+            padding: 6px;
             font-size: 14px;
-            font-family: 'Roboto', Arial, sans-serif;
-            text-transform: uppercase;
             border: none;
             border-radius: 4px;
             cursor: pointer;
@@ -61,8 +59,12 @@
             color: #212121;
             transition: background-color 0.2s;
         }
-        #top-buttons button:hover { background-color: #e0e0e0; }
-        #top-buttons button:active { background-color: #bdbdbd; }
+        #top-buttons button:hover, #menu-button:hover { background-color: #e0e0e0; }
+        #top-buttons button:active, #menu-button:active { background-color: #bdbdbd; }
+        #menu-button {
+            position: absolute;
+            left: 16px;
+        }
         #flowchart-container {
             width: 100%;
             height: calc(100vh - 128px);
@@ -74,28 +76,32 @@
             height: 100%;
         }
         .node {
-            stroke-width: 2;
+            stroke-width: 4;
             cursor: move;
         }
-        .node-automation, .node-profits { stroke: #f44336; }
-        .node-black { stroke: #000000; }
-        .node-tax-revenue { stroke: #4caf50; }
-        .node-job-loss, .node-frustration, .node-political-unrest { stroke: #00b7eb; }
+        .node-red { stroke: #FF5252; }
+        .node-blue { stroke: #4285F4; }
+        .node-green { stroke: #0F9D58; }
+        .node-purple { stroke: #9C27B0; }
+        .node-orange { stroke: #FF9800; }
+        .node-fill {
+            transition: y 0.3s, height 0.3s;
+        }
         .node-text {
             font-size: 14px;
             text-anchor: middle;
             dominant-baseline: middle;
             font-family: 'Roboto', Arial, sans-serif;
             text-transform: lowercase;
-            cursor: move;
+            cursor: text;
             user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
         }
         .arrow {
-            stroke: #757575;
-            stroke-width: 1;
+            stroke: #000000;
+            stroke-width: 2;
             fill: none;
             cursor: pointer;
         }
@@ -104,6 +110,9 @@
             text-anchor: middle;
             font-family: 'Roboto', Arial, sans-serif;
             cursor: pointer;
+        }
+        .selected-glow {
+            filter: drop-shadow(0 0 5px rgba(128, 128, 128, 0.8));
         }
         .menu-bar {
             position: fixed;
@@ -146,24 +155,70 @@
             flex-wrap: wrap;
             align-items: center;
         }
+        #reset-zoom-btn {
+            position: fixed;
+            bottom: 80px;
+            left: 16px;
+            padding: 6px;
+            font-size: 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #f5f5f5;
+            color: #212121;
+            transition: background-color 0.2s;
+            z-index: 1001;
+            display: none;
+        }
+        #reset-zoom-btn:hover { background-color: #e0e0e0; }
+        #reset-zoom-btn:active { background-color: #bdbdbd; }
+        #play-button {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #000;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+        }
+        .play-icon {
+            width: 0;
+            height: 0;
+            border-left: 15px solid white;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+            margin-left: 5px;
+        }
+        .stop-icon {
+            width: 20px;
+            height: 20px;
+            background-color: white;
+        }
         .popup {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
             background-color: #ffffff;
             padding: 16px;
             border-radius: 4px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            z-index: 2000;
+            z-index: 3000;
+            display: none;
         }
-        .popup input {
-            margin-bottom: 8px;
-            padding: 8px;
-            width: 200px;
-            border: 1px solid #e0e0e0;
-            border-radius: 4px;
-            font-family: 'Roboto', Arial, sans-serif;
+        #file-popup {
+            top: 72px;
+            right: 16px;
+            width: 152px; /* 120px button width + 16px padding left + 16px padding right */
+        }
+        #menu-popup {
+            top: 72px;
+            left: 16px;
+            text-align: left;
+            width: 200px; /* Wider than the buttons (120px) for better aesthetics */
         }
         .popup button {
             padding: 6px 16px;
@@ -172,8 +227,33 @@
             color: #ffffff;
             border: none;
             cursor: pointer;
+            margin: 4px 0;
+            width: 120px;
+            text-align: center;
         }
         .popup button:hover { background-color: #303f9f; }
+        .popup .start-fresh-btn {
+            background-color: #0F9D58;
+        }
+        .popup .start-fresh-btn:hover { background-color: #0a7d44; }
+        .popup .file-btn {
+            background-color: #f5f5f5;
+            color: #212121;
+            margin: 4px 0;
+            width: 120px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+        .popup .file-btn:hover { background-color: #e0e0e0; }
+        .popup .file-btn:active { background-color: #bdbdbd; }
+        .popup input {
+            margin-bottom: 8px;
+            padding: 8px;
+            width: 200px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-family: 'Roboto', Arial, sans-serif;
+        }
         #arrow-prompt {
             position: fixed;
             bottom: 72px;
@@ -185,18 +265,63 @@
             border-radius: 4px;
             font-family: 'Roboto', Arial, sans-serif;
             font-size: 14px;
-            z-index: 1000;
+            z-index: 4000; /* Higher z-index to appear above all layers */
             display: none;
         }
         #file-input {
             display: none;
         }
+        .textbox {
+            cursor: move;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        .textbox-small { font-size: 12px; }
+        .textbox-medium { font-size: 16px; }
+        .textbox-large { font-size: 20px; }
+        .control-buttons {
+            display: none;
+        }
+        .triangle-button {
+            cursor: pointer;
+        }
+        .triangle-up {
+            fill: #000000;
+        }
+        .triangle-down {
+            fill: #000000;
+        }
+        .moving-triangle {
+            fill: #000000;
+            transition: transform 1s linear;
+        }
+        #mobile-instructions {
+            display: none;
+            position: absolute;
+            top: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #212121;
+            text-align: center;
+            width: 100%;
+            padding: 0 8px;
+            box-sizing: border-box;
+        }
         @media (max-width: 600px) {
             .menu-bar {
+                position: fixed; /* Ensure it stays at the bottom */
+                bottom: 0; /* Pin to bottom */
+                left: 0;
+                width: 100%;
                 height: 100px;
                 flex-wrap: wrap;
                 justify-content: center;
                 padding: 4px 8px;
+                box-shadow: 0 -2px 10px rgba(0,0,0,0.12);
+                z-index: 1000;
             }
             .menu-bar button {
                 font-size: 12px;
@@ -205,19 +330,34 @@
             #menu-options {
                 justify-content: center;
             }
+            #reset-zoom-btn {
+                bottom: 112px;
+            }
+            #play-button {
+                bottom: 112px;
+            }
+            #mobile-instructions {
+                display: block;
+            }
+            #flowchart-container {
+                height: calc(100vh - 164px); /* Adjust for taller menu bar in mobile */
+            }
         }
     </style>
 </head>
 <body>
     <div id="title-container">
+        <button id="menu-button" onclick="toggleMenuPopup()">
+            <i class="material-icons" style="vertical-align: middle;">menu</i>
+        </button>
         <div>
             <h1 id="title">Flowchart Title</h1>
             <p id="subheading">Subheading Text</p>
         </div>
         <div id="top-buttons">
-            <button onclick="saveFlowchart()">Save</button>
-            <button onclick="document.getElementById('file-input').click()">Upload</button>
-            <input type="file" id="file-input" accept=".txt" onchange="loadFlowchart(event)">
+            <button onclick="toggleFilePopup()">
+                <i class="material-icons" style="vertical-align: middle;">save</i>
+            </button>
         </div>
     </div>
     <div id="flowchart-container">
@@ -225,17 +365,42 @@
             <g id="nodes"></g>
             <g id="arrows"></g>
             <g id="arrow-labels"></g>
+            <g id="textboxes"></g>
+            <g id="moving-triangles"></g>
             <defs>
                 <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-                    <polygon points="0 0, 10 3.5, 0 7" fill="#757575"/>
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#000000"/>
                 </marker>
+                <clipPath id="circle-clip">
+                    <circle cx="0" cy="0" r="50"/>
+                </clipPath>
             </defs>
         </svg>
     </div>
     <div id="arrow-prompt">Click a circle to add an arrow</div>
+    <button id="reset-zoom-btn" onclick="resetView()">
+        <i class="material-icons" style="vertical-align: middle;">zoom_out_map</i>
+    </button>
+    <div id="play-button">
+        <div class="play-icon"></div>
+    </div>
     <div class="menu-bar">
+        <div id="mobile-instructions">Tap to select, double-tap to edit</div>
         <button id="add-circle-btn" onclick="addCircle()">Add Circle</button>
         <div id="menu-options"></div>
+    </div>
+    <div id="file-popup" class="popup">
+        <button class="file-btn" onclick="saveFlowchart()">Save to Device</button>
+        <button class="file-btn" onclick="document.getElementById('file-input').click()">Upload</button>
+        <input type="file" id="file-input" accept=".txt" onchange="loadFlowchart(event)">
+    </div>
+    <div id="menu-popup" class="popup">
+        <button class="start-fresh-btn" onclick="startFresh()">Start Fresh</button>
+        <button onclick="loadTemplate(1)">Template 1</button>
+        <button onclick="loadTemplate(2)">Template 2</button>
+        <button onclick="loadTemplate(3)">Template 3</button>
+        <button onclick="loadTemplate(4)">Template 4</button>
+        <p>© 2025 simulations.cc</p>
     </div>
 
     <script src="https://unpkg.com/@material-ui/core@latest/umd/material-ui.production.min.js"></script>
@@ -245,66 +410,126 @@
         const nodesGroup = document.getElementById('nodes');
         const arrowsGroup = document.getElementById('arrows');
         const arrowLabelsGroup = document.getElementById('arrow-labels');
+        const textboxesGroup = document.getElementById('textboxes');
+        const movingTrianglesGroup = document.getElementById('moving-triangles');
         const menuOptions = document.getElementById('menu-options');
         const arrowPrompt = document.getElementById('arrow-prompt');
+        const resetZoomBtn = document.getElementById('reset-zoom-btn');
+        const playButton = document.getElementById('play-button');
         const title = document.getElementById('title');
         const subheading = document.getElementById('subheading');
+        const filePopup = document.getElementById('file-popup');
+        const menuPopup = document.getElementById('menu-popup');
+        const mobileInstructions = document.getElementById('mobile-instructions');
 
         let nodeData = {};
         let connections = [];
+        let textboxData = {};
         let nextNodeId = 1;
         let nextArrowId = 1;
+        let nextTextboxId = 1;
         let selectedCircle = null;
         let selectedArrow = null;
+        let selectedTextbox = null;
         let addingArrow = false;
-        let viewBoxWidth = 800; // Will be recalculated
-        let viewBoxHeight = 600; // Will be recalculated
-        let zoomLevel = 1;
-        let viewBoxX = 0; // Will be recalculated
-        let viewBoxY = 0; // Will be recalculated
-        let initialPinchDistance = null;
-        let initialZoomLevel = null;
+        let viewBoxWidth = 800;
+        let viewBoxHeight = 600;
+        let viewBoxX = 0;
+        let viewBoxY = 0;
         let isDraggingCanvas = false;
         let dragStartX = 0;
         let dragStartY = 0;
         let dragStartViewBoxX = 0;
         let dragStartViewBoxY = 0;
+        let lastTap = 0;
+        let simulationMode = false;
+        const circleState = {};
+        const maxCount = 20;
 
         const initialNodes = [
-            { id: `node-${nextNodeId++}`, x: 150, y: 50, text: 'automation', class: 'node-automation' },
-            { id: `node-${nextNodeId++}`, x: 350, y: 50, text: 'profits', class: 'node-profits' },
-            { id: `node-${nextNodeId++}`, x: 500, y: 150, text: 'tax revenue', class: 'node-tax-revenue' },
-            { id: `node-${nextNodeId++}`, x: 150, y: 250, text: 'job loss', class: 'node-job-loss' },
-            { id: `node-${nextNodeId++}`, x: 350, y: 250, text: 'frustration', class: 'node-frustration' },
-            { id: `node-${nextNodeId++}`, x: 500, y: 350, text: 'political unrest', class: 'node-political-unrest' }
+            { id: `node-${nextNodeId++}`, x: 150, y: 50, text: 'automation', class: 'node-red' },
+            { id: `node-${nextNodeId++}`, x: 350, y: 50, text: 'profits', class: 'node-red' },
+            { id: `node-${nextNodeId++}`, x: 500, y: 150, text: 'tax revenue', class: 'node-green' },
+            { id: `node-${nextNodeId++}`, x: 150, y: 250, text: 'job loss', class: 'node-blue' },
+            { id: `node-${nextNodeId++}`, x: 350, y: 250, text: 'frustration', class: 'node-blue' },
+            { id: `node-${nextNodeId++}`, x: 500, y: 350, text: 'political unrest', class: 'node-blue' }
         ];
 
         const initialConnections = [
             { id: `arrow-${nextArrowId++}`, from: 'node-1', to: 'node-2', label: '+' },
             { id: `arrow-${nextArrowId++}`, from: 'node-2', to: 'node-3', label: '+' },
-            { id: `arrow-${nextNodeId++}`, from: 'node-1', to: 'node-4', label: '+' },
+            { id: `arrow-${nextArrowId++}`, from: 'node-1', to: 'node-4', label: '+' },
             { id: `arrow-${nextArrowId++}`, from: 'node-4', to: 'node-5', label: '+' },
             { id: `arrow-${nextArrowId++}`, from: 'node-5', to: 'node-6', label: '+' }
+        ];
+
+        const initialTextboxes = [
+            { id: `textbox-${nextTextboxId++}`, x: 300, y: 150, text: 'Sample Textbox 1', color: '#000000', size: 'medium' },
+            { id: `textbox-${nextTextboxId++}`, x: 200, y: 350, text: 'Sample Textbox 2', color: '#FF5252', size: 'large' }
         ];
 
         initialNodes.forEach(node => {
             nodeData[node.id] = { x: node.x, y: node.y, r: 50, text: node.text, class: node.class };
             addNodeToSVG(node.id);
+            circleState[node.id] = 0;
         });
         connections = initialConnections;
+        initialTextboxes.forEach(textbox => {
+            textboxData[textbox.id] = { x: textbox.x, y: textbox.y, text: textbox.text, color: textbox.color, size: textbox.size };
+            addTextboxToSVG(textbox.id);
+        });
+        updateArrows();
 
-        function editText(element) {
+        if (window.innerWidth <= 600) {
+            setTimeout(() => {
+                mobileInstructions.style.display = 'none';
+            }, 3000);
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!filePopup.contains(e.target) && filePopup.style.display === 'block' && !e.target.closest('#top-buttons button')) {
+                filePopup.style.display = 'none';
+            }
+            if (!menuPopup.contains(e.target) && menuPopup.style.display === 'block' && !e.target.closest('#menu-button')) {
+                menuPopup.style.display = 'none';
+            }
+        });
+        document.addEventListener('touchstart', (e) => {
+            if (!filePopup.contains(e.target) && filePopup.style.display === 'block' && !e.target.closest('#top-buttons button')) {
+                filePopup.style.display = 'none';
+            }
+            if (!menuPopup.contains(e.target) && menuPopup.style.display === 'block' && !e.target.closest('#menu-button')) {
+                menuPopup.style.display = 'none';
+            }
+        });
+
+        function editText(currentText, callback) {
+            closeEditPopup();
             const popup = document.createElement('div');
             popup.className = 'popup';
+            popup.style.top = '50%';
+            popup.style.left = '50%';
+            popup.style.transform = 'translate(-50%, -50%)';
+            popup.style.display = 'block';
             const input = document.createElement('input');
             input.type = 'text';
-            input.value = element.textContent;
+            input.value = currentText;
+            input.style.display = 'block';
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const newText = input.value.trim();
+                    if (newText) {
+                        callback(newText);
+                    }
+                    document.body.removeChild(popup);
+                }
+            });
             const okButton = document.createElement('button');
             okButton.textContent = 'OK';
             okButton.onclick = () => {
-                const newText = input.value;
+                const newText = input.value.trim();
                 if (newText) {
-                    element.textContent = newText;
+                    callback(newText);
                 }
                 document.body.removeChild(popup);
             };
@@ -312,13 +537,42 @@
             popup.appendChild(okButton);
             document.body.appendChild(popup);
             input.focus();
+            input.select();
+            popup.addEventListener('click', (e) => e.stopPropagation());
         }
 
-        title.addEventListener('dblclick', () => editText(title));
-        subheading.addEventListener('dblclick', () => editText(subheading));
+        title.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            editText(title.textContent, (newText) => title.textContent = newText);
+        });
+        subheading.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            editText(subheading.textContent, (newText) => subheading.textContent = newText);
+        });
+        title.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const now = new Date().getTime();
+            const timeSinceLastTap = now - lastTap;
+            if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
+                e.stopPropagation();
+                editText(title.textContent, (newText) => title.textContent = newText);
+            }
+            lastTap = now;
+        });
+        subheading.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const now = new Date().getTime();
+            const timeSinceLastTap = now - lastTap;
+            if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
+                e.stopPropagation();
+                editText(subheading.textContent, (newText) => subheading.textContent = newText);
+            }
+            lastTap = now;
+        });
 
         function calculateInitialViewBox() {
-            // Calculate bounding box of all nodes
             let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
             for (const id in nodeData) {
                 const node = nodeData[id];
@@ -327,34 +581,36 @@
                 minY = Math.min(minY, node.y - node.r);
                 maxY = Math.max(maxY, node.y + node.r);
             }
+            for (const id in textboxData) {
+                const textbox = textboxData[id];
+                minX = Math.min(minX, textbox.x - 50);
+                maxX = Math.max(maxX, textbox.x + 50);
+                minY = Math.min(minY, textbox.y - 20);
+                maxY = Math.max(maxY, textbox.y + 20);
+            }
 
-            // Add margin buffer (50px on each side)
             const margin = 50;
             const contentWidth = maxX - minX;
             const contentHeight = maxY - minY;
             viewBoxWidth = contentWidth + 2 * margin;
             viewBoxHeight = contentHeight + 2 * margin;
 
-            // Center the content
             const containerWidth = container.clientWidth;
             const containerHeight = container.clientHeight;
             const aspectRatio = containerWidth / containerHeight;
             const contentAspectRatio = viewBoxWidth / viewBoxHeight;
 
             if (aspectRatio > contentAspectRatio) {
-                // Fit to height, center horizontally
                 viewBoxWidth = viewBoxHeight * aspectRatio;
             } else {
-                // Fit to width, center vertically
                 viewBoxHeight = viewBoxWidth / aspectRatio;
             }
 
             viewBoxX = minX - margin - (viewBoxWidth - contentWidth - 2 * margin) / 2;
             viewBoxY = minY - margin - (viewBoxHeight - contentHeight - 2 * margin) / 2;
 
-            // Ensure viewBox fits within container
-            zoomLevel = 1;
             svg.setAttribute('viewBox', `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`);
+            checkResetButtonVisibility();
         }
 
         function updateViewBox() {
@@ -371,65 +627,32 @@
                 baseHeight = baseWidth / aspectRatio;
             }
 
-            const zoomedWidth = baseWidth / zoomLevel;
-            const zoomedHeight = baseHeight / zoomLevel;
+            viewBoxWidth = baseWidth;
+            viewBoxHeight = baseHeight;
 
-            viewBoxWidth = zoomedWidth;
-            viewBoxHeight = zoomedHeight;
+            svg.setAttribute('viewBox', `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`);
+            checkResetButtonVisibility();
+        }
 
-            svg.setAttribute('viewBox', `${viewBoxX} ${viewBoxY} ${zoomedWidth} ${zoomedHeight}`);
+        function checkResetButtonVisibility() {
+            const contentMinX = Math.min(...Object.values(nodeData).map(n => n.x - n.r), ...Object.values(textboxData).map(t => t.x - 50));
+            const contentMaxX = Math.max(...Object.values(nodeData).map(n => n.x + n.r), ...Object.values(textboxData).map(t => t.x + 50));
+            const contentMinY = Math.min(...Object.values(nodeData).map(n => n.y - n.r), ...Object.values(textboxData).map(t => t.y - 20));
+            const contentMaxY = Math.max(...Object.values(nodeData).map(n => n.y + n.r), ...Object.values(textboxData).map(t => t.y + 20));
+
+            const isOutOfView = contentMinX < viewBoxX || contentMaxX > viewBoxX + viewBoxWidth ||
+                                contentMinY < viewBoxY || contentMaxY > viewBoxY + viewBoxHeight;
+
+            resetZoomBtn.style.display = isOutOfView ? 'block' : 'none';
         }
 
         window.addEventListener('resize', updateViewBox);
-        calculateInitialViewBox(); // Initial centering and sizing
+        calculateInitialViewBox();
         updateViewBox();
 
-        svg.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-            zoomLevel *= zoomFactor;
-            zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 3);
-            updateViewBox();
-        });
-
-        svg.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 2) {
-                e.preventDefault();
-                const touch1 = e.touches[0];
-                const touch2 = e.touches[1];
-                initialPinchDistance = Math.sqrt(
-                    Math.pow(touch1.clientX - touch2.clientX, 2) +
-                    Math.pow(touch1.clientY - touch2.clientY, 2)
-                );
-                initialZoomLevel = zoomLevel;
-            }
-        });
-
-        svg.addEventListener('touchmove', (e) => {
-            if (e.touches.length === 2) {
-                e.preventDefault();
-                const touch1 = e.touches[0];
-                const touch2 = e.touches[1];
-                const currentPinchDistance = Math.sqrt(
-                    Math.pow(touch1.clientX - touch2.clientX, 2) +
-                    Math.pow(touch1.clientY - touch2.clientY, 2)
-                );
-                if (initialPinchDistance) {
-                    const zoomFactor = currentPinchDistance / initialPinchDistance;
-                    zoomLevel = initialZoomLevel * zoomFactor;
-                    zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 3);
-                    updateViewBox();
-                }
-            }
-        });
-
-        svg.addEventListener('touchend', () => {
-            initialPinchDistance = null;
-            initialZoomLevel = null;
-        });
-
         svg.addEventListener('mousedown', (e) => {
-            if (!e.target.closest('.draggable') && !e.target.closest('.arrow') && !e.target.closest('.arrow-label')) {
+            if (!e.target.closest('.draggable') && !e.target.closest('.arrow') && !e.target.closest('.arrow-label') && !e.target.closest('.textbox') && !e.target.closest('.triangle-button')) {
+                e.preventDefault();
                 isDraggingCanvas = true;
                 dragStartX = e.clientX;
                 dragStartY = e.clientY;
@@ -440,6 +663,7 @@
 
         svg.addEventListener('mousemove', (e) => {
             if (isDraggingCanvas) {
+                e.preventDefault();
                 const rect = svg.getBoundingClientRect();
                 const scaleX = viewBoxWidth / rect.width;
                 const scaleY = viewBoxHeight / rect.height;
@@ -456,7 +680,8 @@
         });
 
         svg.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1 && !e.target.closest('.draggable') && !e.target.closest('.arrow') && !e.target.closest('.arrow-label')) {
+            if (e.touches.length === 1 && !e.target.closest('.draggable') && !e.target.closest('.arrow') && !e.target.closest('.arrow-label') && !e.target.closest('.textbox') && !e.target.closest('.triangle-button')) {
+                e.preventDefault();
                 isDraggingCanvas = true;
                 dragStartX = e.touches[0].clientX;
                 dragStartY = e.touches[0].clientY;
@@ -482,6 +707,11 @@
         svg.addEventListener('touchend', () => {
             isDraggingCanvas = false;
         });
+
+        function resetView() {
+            calculateInitialViewBox();
+            updateViewBox();
+        }
 
         function wrapText(text, maxWidth) {
             const words = text.split(' ');
@@ -514,13 +744,28 @@
             group.setAttribute('class', 'draggable');
             group.setAttribute('data-id', id);
 
+            const clipGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            clipGroup.setAttribute('clip-path', 'url(#circle-clip)');
+            clipGroup.setAttribute('transform', `translate(${node.x}, ${node.y})`);
+
+            const fillRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            fillRect.setAttribute('x', -node.r);
+            fillRect.setAttribute('y', node.r);
+            fillRect.setAttribute('width', node.r * 2);
+            fillRect.setAttribute('height', 0);
+            fillRect.setAttribute('class', 'node-fill');
+            fillRect.setAttribute('fill', getFillColor(node.class));
+            clipGroup.appendChild(fillRect);
+
             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            circle.setAttribute('cx', node.x);
-            circle.setAttribute('cy', node.y);
+            circle.setAttribute('cx', 0);
+            circle.setAttribute('cy', 0);
             circle.setAttribute('r', node.r);
             circle.setAttribute('fill', 'transparent');
             circle.setAttribute('class', `node ${node.class}`);
-            group.appendChild(circle);
+            clipGroup.appendChild(circle);
+
+            group.appendChild(clipGroup);
 
             const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
             textElement.setAttribute('x', node.x);
@@ -539,34 +784,75 @@
 
             group.appendChild(textElement);
 
-            const handleCircleInteraction = (e) => {
+            const controls = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            controls.setAttribute('class', 'control-buttons');
+
+            const upButton = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            upButton.setAttribute('d', `M ${node.x - 10} ${node.y - 35} L ${node.x + 10} ${node.y - 35} L ${node.x} ${node.y - 45} Z`);
+            upButton.setAttribute('class', 'triangle-button triangle-up');
+            upButton.addEventListener('click', (e) => { e.stopPropagation(); handleTriangleClick(id, 'up'); });
+            controls.appendChild(upButton);
+
+            const downButton = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            downButton.setAttribute('d', `M ${node.x - 10} ${node.y + 35} L ${node.x + 10} ${node.y + 35} L ${node.x} ${node.y + 45} Z`);
+            downButton.setAttribute('class', 'triangle-button triangle-down');
+            downButton.addEventListener('click', (e) => { e.stopPropagation(); handleTriangleClick(id, 'down'); });
+            controls.appendChild(downButton);
+
+            group.appendChild(controls);
+
+            group.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if (addingArrow) {
                     createArrowToCircle(id);
-                } else {
+                } else if (!simulationMode) {
                     selectCircle(id);
                 }
-            };
-
-            group.addEventListener('click', handleCircleInteraction);
+            });
             group.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 if (e.touches.length === 1) {
-                    handleCircleInteraction(e);
+                    if (addingArrow) {
+                        createArrowToCircle(id);
+                    } else if (!simulationMode) {
+                        selectCircle(id);
+                    }
                 }
             });
 
-            group.addEventListener('dblclick', () => editNodeText(id));
+            group.addEventListener('dblclick', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!simulationMode) {
+                    editText(nodeData[id].text, (newText) => updateNodeText(id, newText));
+                }
+            });
             group.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                if (e.touches.length === 2) {
-                    editNodeText(id);
+                const now = new Date().getTime();
+                const timeSinceLastTap = now - lastTap;
+                if (timeSinceLastTap < 300 && timeSinceLastTap > 0 && !simulationMode) {
+                    e.stopPropagation();
+                    editText(nodeData[id].text, (newText) => updateNodeText(id, newText));
                 }
+                lastTap = now;
             });
 
-            group.addEventListener('mousedown', startDragging);
+            group.addEventListener('mousedown', startDraggingTouch);
             group.addEventListener('touchstart', startDraggingTouch);
             nodesGroup.appendChild(group);
+            updateCircleFill(id);
+        }
+
+        function getFillColor(nodeClass) {
+            switch (nodeClass) {
+                case 'node-red': return 'rgba(255, 82, 82, 0.8)';
+                case 'node-blue': return 'rgba(66, 133, 244, 0.8)';
+                case 'node-green': return 'rgba(15, 157, 88, 0.8)';
+                case 'node-purple': return 'rgba(156, 39, 176, 0.8)';
+                case 'node-orange': return 'rgba(255, 152, 0, 0.8)';
+                default: return 'rgba(255, 82, 82, 0.8)';
+            }
         }
 
         function getEdgePoint(from, to, radius) {
@@ -634,8 +920,9 @@
                 path.setAttribute('class', 'arrow');
                 path.setAttribute('marker-end', 'url(#arrowhead)');
                 path.setAttribute('data-id', conn.id);
-                path.addEventListener('click', (e) => { e.stopPropagation(); selectArrow(conn.id); });
-                path.addEventListener('touchstart', (e) => { e.preventDefault(); selectArrow(conn.id); });
+                if (conn.id === selectedArrow) path.classList.add('selected-glow');
+                path.addEventListener('click', (e) => { e.stopPropagation(); if (!simulationMode) selectArrow(conn.id); });
+                path.addEventListener('touchstart', (e) => { e.preventDefault(); if (!simulationMode) selectArrow(conn.id); });
                 arrowsGroup.appendChild(path);
 
                 const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -644,108 +931,100 @@
                 label.setAttribute('class', 'arrow-label');
                 label.textContent = conn.label;
                 label.setAttribute('data-id', conn.id);
-                label.addEventListener('click', (e) => { e.stopPropagation(); selectArrow(conn.id); });
-                label.addEventListener('touchstart', (e) => { e.preventDefault(); selectArrow(conn.id); });
+                if (conn.id === selectedArrow) label.classList.add('selected-glow');
+                label.addEventListener('click', (e) => { e.stopPropagation(); if (!simulationMode) selectArrow(conn.id); });
+                label.addEventListener('touchstart', (e) => { e.preventDefault(); if (!simulationMode) selectArrow(conn.id); });
                 arrowLabelsGroup.appendChild(label);
             });
         }
 
-        updateArrows();
-
         svg.addEventListener('click', (e) => {
-            if (!e.target.closest('.draggable') && !e.target.closest('.arrow') && !e.target.closest('.arrow-label')) {
-                selectedCircle = null;
-                selectedArrow = null;
-                addingArrow = false;
-                arrowPrompt.style.display = 'none';
-                closeEditPopup();
-                updateMenuOptions();
+            if (!e.target.closest('.draggable') && !e.target.closest('.arrow') && !e.target.closest('.arrow-label') && !e.target.closest('.textbox') && !e.target.closest('.triangle-button')) {
+                deselectAll();
             }
         });
 
         svg.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
-                if (!e.target.closest('.draggable') && !e.target.closest('.arrow') && !e.target.closest('.arrow-label')) {
-                    selectedCircle = null;
-                    selectedArrow = null;
-                    addingArrow = false;
-                    arrowPrompt.style.display = 'none';
-                    closeEditPopup();
-                    updateMenuOptions();
+                if (!e.target.closest('.draggable') && !e.target.closest('.arrow') && !e.target.closest('.arrow-label') && !e.target.closest('.textbox') && !e.target.closest('.triangle-button')) {
+                    deselectAll();
                 }
             }
         });
 
         let draggedNode = null;
+        let draggedTextbox = null;
         let offsetX, offsetY;
 
-        function startDragging(e) {
+        function startDraggingTouch(e) {
             e.preventDefault();
-            e.stopPropagation();
-            draggedNode = e.currentTarget;
-            const circle = draggedNode.querySelector('circle');
+            if (e.type === 'touchstart' && e.touches.length !== 1) return;
+            const target = e.currentTarget;
             const rect = svg.getBoundingClientRect();
             const scaleX = viewBoxWidth / rect.width;
             const scaleY = viewBoxHeight / rect.height;
-            offsetX = (e.clientX - rect.left) * scaleX - parseFloat(circle.getAttribute('cx'));
-            offsetY = (e.clientY - rect.top) * scaleY - parseFloat(circle.getAttribute('cy'));
+            const clientX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+            const clientY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
+            const touchX = clientX - rect.left;
+            const touchY = clientY - rect.top;
+
+            if (target.classList.contains('draggable') && !simulationMode) {
+                draggedNode = target;
+                const circle = draggedNode.querySelector('circle');
+                offsetX = touchX * scaleX - parseFloat(circle.parentElement.getAttribute('transform').match(/translate\(([^,]+),/)[1]);
+                offsetY = touchY * scaleY - parseFloat(circle.parentElement.getAttribute('transform').match(/translate\([^,]+,([^)]+)\)/)[1]);
+            } else if (target.classList.contains('textbox') && !simulationMode) {
+                draggedTextbox = target;
+                offsetX = touchX * scaleX - parseFloat(target.getAttribute('x'));
+                offsetY = touchY * scaleY - parseFloat(target.getAttribute('y'));
+            }
             svg.addEventListener('mousemove', drag);
             svg.addEventListener('mouseup', stopDragging);
+            svg.addEventListener('touchmove', dragTouch);
+            svg.addEventListener('touchend', stopDraggingTouch);
         }
 
         function drag(e) {
             e.preventDefault();
-            if (!draggedNode) return;
+            if (!draggedNode && !draggedTextbox) return;
             const rect = svg.getBoundingClientRect();
             const scaleX = viewBoxWidth / rect.width;
             const scaleY = viewBoxHeight / rect.height;
             const x = (e.clientX - rect.left) * scaleX - offsetX;
             const y = (e.clientY - rect.top) * scaleY - offsetY;
 
-            const circle = draggedNode.querySelector('circle');
-            const text = draggedNode.querySelector('text');
-            circle.setAttribute('cx', x);
-            circle.setAttribute('cy', y);
-            text.setAttribute('x', x);
-            text.setAttribute('y', y);
-
-            const tspans = text.querySelectorAll('tspan');
-            tspans.forEach((tspan, index) => {
-                tspan.setAttribute('x', x);
-                tspan.setAttribute('dy', index === 0 ? `${- (tspans.length - 1) * 7}px` : '14px');
-            });
-
-            const id = draggedNode.getAttribute('data-id');
-            nodeData[id].x = x;
-            nodeData[id].y = y;
-            updateArrows();
-        }
-
-        function stopDragging() {
-            draggedNode = null;
-            svg.removeEventListener('mousemove', drag);
-            svg.removeEventListener('mouseup', stopDragging);
-        }
-
-        function startDraggingTouch(e) {
-            e.preventDefault();
-            if (e.touches.length !== 1) return;
-            draggedNode = e.currentTarget;
-            const rect = svg.getBoundingClientRect();
-            const scaleX = viewBoxWidth / rect.width;
-            const scaleY = viewBoxHeight / rect.height;
-            const touchX = e.touches[0].clientX - rect.left;
-            const touchY = e.touches[0].clientY - rect.top;
-            const circle = draggedNode.querySelector('circle');
-            offsetX = touchX * scaleX - parseFloat(circle.getAttribute('cx'));
-            offsetY = touchY * scaleY - parseFloat(circle.getAttribute('cy'));
-            svg.addEventListener('touchmove', dragTouch);
-            svg.addEventListener('touchend', stopDraggingTouch);
+            if (draggedNode) {
+                const clipGroup = draggedNode.querySelector('g[clip-path]');
+                const text = draggedNode.querySelector('text');
+                const controls = draggedNode.querySelector('.control-buttons');
+                clipGroup.setAttribute('transform', `translate(${x}, ${y})`);
+                text.setAttribute('x', x);
+                text.setAttribute('y', y);
+                const tspans = text.querySelectorAll('tspan');
+                tspans.forEach((tspan, index) => {
+                    tspan.setAttribute('x', x);
+                    tspan.setAttribute('dy', index === 0 ? `${- (tspans.length - 1) * 7}px` : '14px');
+                });
+                const upButton = controls.querySelector('.triangle-up');
+                const downButton = controls.querySelector('.triangle-down');
+                upButton.setAttribute('d', `M ${x - 10} ${y - 35} L ${x + 10} ${y - 35} L ${x} ${y - 45} Z`);
+                downButton.setAttribute('d', `M ${x - 10} ${y + 35} L ${x + 10} ${y + 35} L ${x} ${y + 45} Z`);
+                const id = draggedNode.getAttribute('data-id');
+                nodeData[id].x = x;
+                nodeData[id].y = y;
+                updateArrows();
+            } else if (draggedTextbox) {
+                draggedTextbox.setAttribute('x', x);
+                draggedTextbox.setAttribute('y', y);
+                const id = draggedTextbox.getAttribute('data-id');
+                textboxData[id].x = x;
+                textboxData[id].y = y;
+            }
         }
 
         function dragTouch(e) {
             e.preventDefault();
-            if (!draggedNode || e.touches.length !== 1) return;
+            if (!draggedNode && !draggedTextbox || e.touches.length !== 1) return;
             const rect = svg.getBoundingClientRect();
             const scaleX = viewBoxWidth / rect.width;
             const scaleY = viewBoxHeight / rect.height;
@@ -754,27 +1033,45 @@
             const x = touchX * scaleX - offsetX;
             const y = touchY * scaleY - offsetY;
 
-            const circle = draggedNode.querySelector('circle');
-            const text = draggedNode.querySelector('text');
-            circle.setAttribute('cx', x);
-            circle.setAttribute('cy', y);
-            text.setAttribute('x', x);
-            text.setAttribute('y', y);
+            if (draggedNode) {
+                const clipGroup = draggedNode.querySelector('g[clip-path]');
+                const text = draggedNode.querySelector('text');
+                const controls = draggedNode.querySelector('.control-buttons');
+                clipGroup.setAttribute('transform', `translate(${x}, ${y})`);
+                text.setAttribute('x', x);
+                text.setAttribute('y', y);
+                const tspans = text.querySelectorAll('tspan');
+                tspans.forEach((tspan, index) => {
+                    tspan.setAttribute('x', x);
+                    tspan.setAttribute('dy', index === 0 ? `${- (tspans.length - 1) * 7}px` : '14px');
+                });
+                const upButton = controls.querySelector('.triangle-up');
+                const downButton = controls.querySelector('.triangle-down');
+                upButton.setAttribute('d', `M ${x - 10} ${y - 35} L ${x + 10} ${y - 35} L ${x} ${y - 45} Z`);
+                downButton.setAttribute('d', `M ${x - 10} ${y + 35} L ${x + 10} ${y + 35} L ${x} ${y + 45} Z`);
+                const id = draggedNode.getAttribute('data-id');
+                nodeData[id].x = x;
+                nodeData[id].y = y;
+                updateArrows();
+            } else if (draggedTextbox) {
+                draggedTextbox.setAttribute('x', x);
+                draggedTextbox.setAttribute('y', y);
+                const id = draggedTextbox.getAttribute('data-id');
+                textboxData[id].x = x;
+                textboxData[id].y = y;
+            }
+        }
 
-            const tspans = text.querySelectorAll('tspan');
-            tspans.forEach((tspan, index) => {
-                tspan.setAttribute('x', x);
-                tspan.setAttribute('dy', index === 0 ? `${- (tspans.length - 1) * 7}px` : '14px');
-            });
-
-            const id = draggedNode.getAttribute('data-id');
-            nodeData[id].x = x;
-            nodeData[id].y = y;
-            updateArrows();
+        function stopDragging() {
+            draggedNode = null;
+            draggedTextbox = null;
+            svg.removeEventListener('mousemove', drag);
+            svg.removeEventListener('mouseup', stopDragging);
         }
 
         function stopDraggingTouch() {
             draggedNode = null;
+            draggedTextbox = null;
             svg.removeEventListener('touchmove', dragTouch);
             svg.removeEventListener('touchend', stopDraggingTouch);
         }
@@ -783,9 +1080,63 @@
             const id = `node-${nextNodeId++}`;
             const centerX = viewBoxWidth / 2 + viewBoxX;
             const centerY = viewBoxHeight / 2 + viewBoxY;
-            nodeData[id] = { x: centerX, y: centerY, r: 50, text: `new circle ${nextNodeId}`, class: 'node-job-loss' };
+            nodeData[id] = { x: centerX, y: centerY, r: 50, text: `new circle ${nextNodeId}`, class: 'node-blue' };
+            circleState[id] = 0;
             addNodeToSVG(id);
             updateArrows();
+        }
+
+        function addTextbox() {
+            const id = `textbox-${nextTextboxId++}`;
+            const centerX = viewBoxWidth / 2 + viewBoxX;
+            const centerY = viewBoxHeight / 2 + viewBoxY;
+            textboxData[id] = { x: centerX, y: centerY, text: 'New Textbox', color: '#000000', size: 'medium' };
+            addTextboxToSVG(id);
+        }
+
+        function addTextboxToSVG(id) {
+            const textbox = textboxData[id];
+            const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            textElement.setAttribute('x', textbox.x);
+            textElement.setAttribute('y', textbox.y);
+            textElement.setAttribute('class', `textbox textbox-${textbox.size}`);
+            textElement.setAttribute('fill', textbox.color);
+            textElement.setAttribute('data-id', id);
+            textElement.textContent = textbox.text;
+
+            textElement.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!simulationMode) selectTextbox(id);
+            });
+            textElement.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (e.touches.length === 1 && !simulationMode) {
+                    selectTextbox(id);
+                }
+            });
+
+            textElement.addEventListener('dblclick', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!simulationMode) {
+                    editText(textboxData[id].text, (newText) => updateTextboxText(id, newText));
+                }
+            });
+            textElement.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const now = new Date().getTime();
+                const timeSinceLastTap = now - lastTap;
+                if (timeSinceLastTap < 300 && timeSinceLastTap > 0 && !simulationMode) {
+                    e.stopPropagation();
+                    editText(textboxData[id].text, (newText) => updateTextboxText(id, newText));
+                }
+                lastTap = now;
+            });
+
+            textElement.addEventListener('mousedown', startDraggingTouch);
+            textElement.addEventListener('touchstart', startDraggingTouch);
+
+            textboxesGroup.appendChild(textElement);
         }
 
         function findNodeAtPoint(clientX, clientY) {
@@ -807,18 +1158,39 @@
         }
 
         function selectCircle(id) {
+            deselectAll();
             selectedCircle = id;
-            selectedArrow = null;
-            addingArrow = false;
-            arrowPrompt.style.display = 'none';
+            const group = nodesGroup.querySelector(`[data-id="${id}"]`);
+            group.classList.add('selected-glow');
             updateMenuOptions();
         }
 
         function selectArrow(id) {
+            deselectAll();
             selectedArrow = id;
+            updateArrows();
+            updateMenuOptions();
+        }
+
+        function selectTextbox(id) {
+            deselectAll();
+            selectedTextbox = id;
+            const textbox = textboxesGroup.querySelector(`[data-id="${id}"]`);
+            textbox.classList.add('selected-glow');
+            updateMenuOptions();
+        }
+
+        function deselectAll() {
             selectedCircle = null;
+            selectedArrow = null;
+            selectedTextbox = null;
             addingArrow = false;
             arrowPrompt.style.display = 'none';
+            closeEditPopup();
+            nodesGroup.querySelectorAll('.draggable').forEach(g => g.classList.remove('selected-glow'));
+            arrowsGroup.querySelectorAll('.arrow').forEach(a => a.classList.remove('selected-glow'));
+            arrowLabelsGroup.querySelectorAll('.arrow-label').forEach(l => l.classList.remove('selected-glow'));
+            textboxesGroup.querySelectorAll('.textbox').forEach(t => t.classList.remove('selected-glow'));
             updateMenuOptions();
         }
 
@@ -846,40 +1218,41 @@
         }
 
         function editNodeText(id) {
-            const popup = document.createElement('div');
-            popup.className = 'popup';
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = nodeData[id].text;
-            const okButton = document.createElement('button');
-            okButton.textContent = 'OK';
-            okButton.onclick = () => {
-                const newText = input.value;
-                if (newText) {
-                    nodeData[id].text = newText.toLowerCase();
-                    const group = nodesGroup.querySelector(`[data-id="${id}"]`);
-                    const textElement = group.querySelector('text');
-                    textElement.innerHTML = '';
-                    const maxWidth = nodeData[id].r * 1.5;
-                    const lines = wrapText(newText.toLowerCase(), maxWidth);
-                    lines.forEach((line, index) => {
-                        const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-                        tspan.setAttribute('x', nodeData[id].x);
-                        tspan.setAttribute('dy', index === 0 ? `${- (lines.length - 1) * 7}px` : '14px');
-                        tspan.textContent = line;
-                        textElement.appendChild(tspan);
-                    });
-                }
-                document.body.removeChild(popup);
-            };
-            popup.appendChild(input);
-            popup.appendChild(okButton);
-            document.body.appendChild(popup);
-            input.focus();
+            editText(nodeData[id].text, (newText) => updateNodeText(id, newText));
+        }
+
+        function updateNodeText(id, newText) {
+            if (newText) {
+                nodeData[id].text = newText.toLowerCase();
+                const group = nodesGroup.querySelector(`[data-id="${id}"]`);
+                const textElement = group.querySelector('text');
+                textElement.innerHTML = '';
+                const maxWidth = nodeData[id].r * 1.5;
+                const lines = wrapText(newText.toLowerCase(), maxWidth);
+                lines.forEach((line, index) => {
+                    const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                    tspan.setAttribute('x', nodeData[id].x);
+                    tspan.setAttribute('dy', index === 0 ? `${- (lines.length - 1) * 7}px` : '14px');
+                    tspan.textContent = line;
+                    textElement.appendChild(tspan);
+                });
+            }
+        }
+
+        function editTextboxText(id) {
+            editText(textboxData[id].text, (newText) => updateTextboxText(id, newText));
+        }
+
+        function updateTextboxText(id, newText) {
+            if (newText) {
+                textboxData[id].text = newText;
+                const textbox = textboxesGroup.querySelector(`[data-id="${id}"]`);
+                textbox.textContent = newText;
+            }
         }
 
         function closeEditPopup() {
-            const popup = document.querySelector('.popup');
+            const popup = document.querySelector('.popup:not(#file-popup):not(#menu-popup)');
             if (popup) {
                 document.body.removeChild(popup);
             }
@@ -887,7 +1260,19 @@
 
         function updateMenuOptions() {
             menuOptions.innerHTML = '';
-            if (selectedCircle) {
+            const addCircleBtn = document.getElementById('add-circle-btn');
+            if (!selectedCircle && !selectedTextbox && !selectedArrow && !simulationMode) {
+                addCircleBtn.style.display = 'block';
+                const addTextboxBtn = document.createElement('button');
+                addTextboxBtn.textContent = 'Add Textbox';
+                addTextboxBtn.onclick = addTextbox;
+                addTextboxBtn.style.marginLeft = '8px'; // Added gap between Add Circle and Add Textbox
+                menuOptions.appendChild(addTextboxBtn);
+            } else {
+                addCircleBtn.style.display = 'none';
+            }
+
+            if (selectedCircle && !simulationMode) {
                 const changeColorBtn = document.createElement('button');
                 changeColorBtn.textContent = 'Change Color';
                 changeColorBtn.onclick = changeCircleColor;
@@ -907,7 +1292,7 @@
                 deleteBtn.textContent = 'Delete';
                 deleteBtn.onclick = deleteCircle;
                 menuOptions.appendChild(deleteBtn);
-            } else if (selectedArrow) {
+            } else if (selectedArrow && !simulationMode) {
                 const changeDirectionBtn = document.createElement('button');
                 changeDirectionBtn.textContent = 'Reverse';
                 changeDirectionBtn.onclick = changeArrowDirection;
@@ -922,29 +1307,50 @@
                 deleteBtn.textContent = 'Delete';
                 deleteBtn.onclick = deleteArrow;
                 menuOptions.appendChild(deleteBtn);
+            } else if (selectedTextbox && !simulationMode) {
+                const changeColorBtn = document.createElement('button');
+                changeColorBtn.textContent = 'Change Color';
+                changeColorBtn.onclick = changeTextboxColor;
+                menuOptions.appendChild(changeColorBtn);
+
+                const toggleSizeBtn = document.createElement('button');
+                toggleSizeBtn.textContent = 'Toggle Size';
+                toggleSizeBtn.onclick = toggleTextboxSize;
+                menuOptions.appendChild(toggleSizeBtn);
+
+                const editTextBtn = document.createElement('button');
+                editTextBtn.textContent = 'Edit Text';
+                editTextBtn.onclick = () => editTextboxText(selectedTextbox);
+                menuOptions.appendChild(editTextBtn);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.onclick = deleteTextbox;
+                menuOptions.appendChild(deleteBtn);
             }
         }
 
         function changeCircleColor() {
             if (!selectedCircle) return;
             const node = nodeData[selectedCircle];
-            const colors = ['node-automation', 'node-black', 'node-job-loss', 'node-tax-revenue'];
+            const colors = ['node-red', 'node-blue', 'node-green', 'node-purple', 'node-orange'];
             const currentIndex = colors.indexOf(node.class);
             node.class = colors[(currentIndex + 1) % colors.length];
             const group = nodesGroup.querySelector(`[data-id="${selectedCircle}"]`);
             const circle = group.querySelector('circle');
+            const fillRect = group.querySelector('.node-fill');
             circle.setAttribute('class', `node ${node.class}`);
+            fillRect.setAttribute('fill', getFillColor(node.class));
         }
 
         function deleteCircle() {
             if (!selectedCircle) return;
             delete nodeData[selectedCircle];
+            delete circleState[selectedCircle];
             const group = nodesGroup.querySelector(`[data-id="${selectedCircle}"]`);
             nodesGroup.removeChild(group);
             connections = connections.filter(conn => conn.from !== selectedCircle && conn.to !== selectedCircle);
-            selectedCircle = null;
-            updateMenuOptions();
-            updateArrows();
+            deselectAll();
         }
 
         function changeArrowDirection() {
@@ -968,9 +1374,43 @@
         function deleteArrow() {
             if (!selectedArrow) return;
             connections = connections.filter(conn => conn.id !== selectedArrow);
-            selectedArrow = null;
-            updateMenuOptions();
-            updateArrows();
+            deselectAll();
+        }
+
+        function changeTextboxColor() {
+            if (!selectedTextbox) return;
+            const textbox = textboxData[selectedTextbox];
+            const colors = ['#000000', '#FF5252', '#4285F4', '#0F9D58', '#9C27B0'];
+            const currentIndex = colors.indexOf(textbox.color);
+            textbox.color = colors[(currentIndex + 1) % colors.length];
+            const element = textboxesGroup.querySelector(`[data-id="${selectedTextbox}"]`);
+            element.setAttribute('fill', textbox.color);
+        }
+
+        function toggleTextboxSize() {
+            if (!selectedTextbox) return;
+            const textbox = textboxData[selectedTextbox];
+            const sizes = ['small', 'medium', 'large'];
+            const currentIndex = sizes.indexOf(textbox.size);
+            textbox.size = sizes[(currentIndex + 1) % sizes.length];
+            const element = textboxesGroup.querySelector(`[data-id="${selectedTextbox}"]`);
+            element.className.baseVal = `textbox textbox-${textbox.size}${selectedTextbox === selectedTextbox ? ' selected-glow' : ''}`;
+        }
+
+        function deleteTextbox() {
+            if (!selectedTextbox) return;
+            delete textboxData[selectedTextbox];
+            const textbox = textboxesGroup.querySelector(`[data-id="${selectedTextbox}"]`);
+            textboxesGroup.removeChild(textbox);
+            deselectAll();
+        }
+
+        function toggleFilePopup() {
+            filePopup.style.display = filePopup.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function toggleMenuPopup() {
+            menuPopup.style.display = menuPopup.style.display === 'block' ? 'none' : 'block';
         }
 
         function saveFlowchart() {
@@ -979,10 +1419,12 @@
                 subheading: subheading.textContent,
                 nodes: nodeData,
                 connections: connections,
+                textboxes: textboxData,
                 nextNodeId: nextNodeId,
                 nextArrowId: nextArrowId,
+                nextTextboxId: nextTextboxId,
                 viewBox: { width: viewBoxWidth, height: viewBoxHeight, x: viewBoxX, y: viewBoxY },
-                zoomLevel: zoomLevel
+                circleState: circleState
             };
             const jsonString = JSON.stringify(data, null, 2);
             const blob = new Blob([jsonString], { type: 'text/plain' });
@@ -994,6 +1436,7 @@
             a.click();
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
+            toggleFilePopup();
         }
 
         function loadFlowchart(event) {
@@ -1006,39 +1449,275 @@
                     nodesGroup.innerHTML = '';
                     arrowsGroup.innerHTML = '';
                     arrowLabelsGroup.innerHTML = '';
+                    textboxesGroup.innerHTML = '';
+                    movingTrianglesGroup.innerHTML = '';
                     nodeData = {};
                     connections = [];
+                    textboxData = {};
+                    circleState = {};
 
                     title.textContent = data.title || 'Flowchart Title';
                     subheading.textContent = data.subheading || 'Subheading Text';
                     nodeData = data.nodes || {};
                     connections = data.connections || [];
+                    textboxData = data.textboxes || {};
                     nextNodeId = data.nextNodeId || 1;
                     nextArrowId = data.nextArrowId || 1;
+                    nextTextboxId = data.nextTextboxId || 1;
+                    Object.assign(circleState, data.circleState || {});
 
                     for (const id in nodeData) {
                         addNodeToSVG(id);
+                        if (!(id in circleState)) circleState[id] = 0;
+                    }
+                    for (const id in textboxData) {
+                        addTextboxToSVG(id);
                     }
                     updateArrows();
 
-                    // Use saved viewBox if available, otherwise recalculate
-                    if (data.viewBox && data.zoomLevel) {
+                    if (data.viewBox) {
                         viewBoxWidth = data.viewBox.width;
                         viewBoxHeight = data.viewBox.height;
                         viewBoxX = data.viewBox.x;
                         viewBoxY = data.viewBox.y;
-                        zoomLevel = data.zoomLevel;
                     } else {
                         calculateInitialViewBox();
                     }
                     updateViewBox();
-                    updateMenuOptions();
+                    deselectAll();
+                    toggleSimulationMode(simulationMode);
                 } catch (error) {
                     alert('Invalid file format. Please upload a valid flowchart text file.');
                     console.error(error);
                 }
             };
             reader.readAsText(file);
+        }
+
+        playButton.addEventListener('click', () => {
+            simulationMode = !simulationMode;
+            toggleSimulationMode(simulationMode);
+        });
+
+        function toggleSimulationMode(enable) {
+            const controlButtons = nodesGroup.querySelectorAll('.control-buttons');
+            const icon = playButton.querySelector('div');
+            if (enable) {
+                playButton.style.backgroundColor = '#555';
+                icon.className = 'stop-icon';
+                controlButtons.forEach(button => button.style.display = 'block');
+                deselectAll();
+            } else {
+                playButton.style.backgroundColor = '#000';
+                icon.className = 'play-icon';
+                controlButtons.forEach(button => button.style.display = 'none');
+                resetAllFills();
+            }
+            updateMenuOptions();
+        }
+
+        function resetAllFills() {
+            for (const id in circleState) {
+                circleState[id] = 0;
+                updateCircleFill(id);
+            }
+        }
+
+        function handleTriangleClick(nodeId, direction) {
+            if (!simulationMode) return;
+
+            const group = nodesGroup.querySelector(`[data-id="${nodeId}"]`);
+            const fillRect = group.querySelector('.node-fill');
+            const node = nodeData[nodeId];
+            const canIncrease = circleState[nodeId] < maxCount;
+            const canDecrease = circleState[nodeId] > 0;
+
+            if (direction === 'up') {
+                if (canIncrease) circleState[nodeId]++;
+                updateCircleFill(nodeId);
+
+                const outgoingConnections = connections.filter(conn => conn.from === nodeId);
+                outgoingConnections.forEach(conn => {
+                    const targetNode = nodeData[conn.to];
+                    const effectiveDirection = conn.label === '+' ? 'up' : 'down';
+                    createMovingTriangle(nodeData[nodeId], targetNode, effectiveDirection);
+                    if (effectiveDirection === 'up' && circleState[conn.to] < maxCount) {
+                        circleState[conn.to]++;
+                        updateCircleFill(conn.to);
+                    } else if (effectiveDirection === 'down' && circleState[conn.to] > 0) {
+                        circleState[conn.to]--;
+                        updateCircleFill(conn.to);
+                    }
+                });
+            } else if (direction === 'down') {
+                if (canDecrease) circleState[nodeId]--;
+                updateCircleFill(nodeId);
+
+                const outgoingConnections = connections.filter(conn => conn.from === nodeId);
+                outgoingConnections.forEach(conn => {
+                    const targetNode = nodeData[conn.to];
+                    const effectiveDirection = conn.label === '+' ? 'down' : 'up';
+                    createMovingTriangle(nodeData[nodeId], targetNode, effectiveDirection);
+                    if (effectiveDirection === 'up' && circleState[conn.to] < maxCount) {
+                        circleState[conn.to]++;
+                        updateCircleFill(conn.to);
+                    } else if (effectiveDirection === 'down' && circleState[conn.to] > 0) {
+                        circleState[conn.to]--;
+                        updateCircleFill(conn.to);
+                    }
+                });
+            }
+        }
+
+        function updateCircleFill(nodeId) {
+            const node = nodeData[nodeId];
+            const percentage = circleState[nodeId] / maxCount;
+            const height = node.r * 2 * percentage;
+            const y = node.r - height;
+            const group = nodesGroup.querySelector(`[data-id="${nodeId}"]`);
+            const fillRect = group.querySelector('.node-fill');
+            fillRect.setAttribute('y', y);
+            fillRect.setAttribute('height', height);
+        }
+
+        function createMovingTriangle(fromNode, toNode, direction) {
+            const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            triangle.setAttribute('class', 'moving-triangle');
+            const startX = fromNode.x;
+            const startY = fromNode.y;
+            const endX = toNode.x;
+            const endY = toNode.y;
+            triangle.setAttribute('d', `M ${startX - 7} ${startY} L ${startX + 7} ${startY} L ${startX} ${startY - 10} Z`);
+            if (direction === 'down') {
+                triangle.setAttribute('transform', `translate(${startX}, ${startY}) rotate(180) translate(${-startX}, ${-startY})`);
+            }
+            movingTrianglesGroup.appendChild(triangle);
+
+            setTimeout(() => {
+                triangle.setAttribute('transform', `translate(${endX - startX}, ${endY - startY})` + (direction === 'down' ? ` translate(${startX}, ${startY}) rotate(180) translate(${-startX}, ${-startY})` : ''));
+                setTimeout(() => {
+                    triangle.remove();
+                }, 1000);
+            }, 10);
+        }
+
+        function startFresh() {
+            nodesGroup.innerHTML = '';
+            arrowsGroup.innerHTML = '';
+            arrowLabelsGroup.innerHTML = '';
+            textboxesGroup.innerHTML = '';
+            movingTrianglesGroup.innerHTML = '';
+            nodeData = {};
+            connections = [];
+            textboxData = {};
+            circleState = {};
+            nextNodeId = 1;
+            nextArrowId = 1;
+            nextTextboxId = 1;
+            title.textContent = 'Flowchart Title';
+            subheading.textContent = 'Subheading Text';
+            calculateInitialViewBox();
+            updateViewBox();
+            deselectAll();
+            toggleMenuPopup();
+            toggleSimulationMode(false);
+        }
+
+        function loadTemplate(templateNumber) {
+            nodesGroup.innerHTML = '';
+            arrowsGroup.innerHTML = '';
+            arrowLabelsGroup.innerHTML = '';
+            textboxesGroup.innerHTML = '';
+            movingTrianglesGroup.innerHTML = '';
+            nodeData = {};
+            connections = [];
+            textboxData = {};
+            circleState = {};
+            nextNodeId = 1;
+            nextArrowId = 1;
+            nextTextboxId = 1;
+
+            let nodes, conns, texts;
+            switch (templateNumber) {
+                case 1:
+                    nodes = [
+                        { id: `node-${nextNodeId++}`, x: 200, y: 100, text: 'input', class: 'node-blue' },
+                        { id: `node-${nextNodeId++}`, x: 400, y: 100, text: 'process', class: 'node-green' },
+                        { id: `node-${nextNodeId++}`, x: 600, y: 100, text: 'output', class: 'node-red' }
+                    ];
+                    conns = [
+                        { id: `arrow-${nextArrowId++}`, from: 'node-1', to: 'node-2', label: '+' },
+                        { id: `arrow-${nextArrowId++}`, from: 'node-2', to: 'node-3', label: '+' }
+                    ];
+                    texts = [];
+                    title.textContent = 'Basic Flow';
+                    subheading.textContent = 'Template 1';
+                    break;
+                case 2:
+                    nodes = [
+                        { id: `node-${nextNodeId++}`, x: 300, y: 100, text: 'start', class: 'node-purple' },
+                        { id: `node-${nextNodeId++}`, x: 300, y: 300, text: 'end', class: 'node-orange' }
+                    ];
+                    conns = [
+                        { id: `arrow-${nextArrowId++}`, from: 'node-1', to: 'node-2', label: '+' }
+                    ];
+                    texts = [
+                        { id: `textbox-${nextTextboxId++}`, x: 300, y: 200, text: 'Simple Path', color: '#000000', size: 'medium' }
+                    ];
+                    title.textContent = 'Simple Flow';
+                    subheading.textContent = 'Template 2';
+                    break;
+                case 3:
+                    nodes = [
+                        { id: `node-${nextNodeId++}`, x: 200, y: 200, text: 'source', class: 'node-red' },
+                        { id: `node-${nextNodeId++}`, x: 400, y: 100, text: 'step 1', class: 'node-blue' },
+                        { id: `node-${nextNodeId++}`, x: 400, y: 300, text: 'step 2', class: 'node-green' },
+                        { id: `node-${nextNodeId++}`, x: 600, y: 200, text: 'result', class: 'node-purple' }
+                    ];
+                    conns = [
+                        { id: `arrow-${nextArrowId++}`, from: 'node-1', to: 'node-2', label: '+' },
+                        { id: `arrow-${nextArrowId++}`, from: 'node-1', to: 'node-3', label: '+' },
+                        { id: `arrow-${nextArrowId++}`, from: 'node-2', to: 'node-4', label: '+' },
+                        { id: `arrow-${nextArrowId++}`, from: 'node-3', to: 'node-4', label: '+' }
+                    ];
+                    texts = [];
+                    title.textContent = 'Converging Flow';
+                    subheading.textContent = 'Template 3';
+                    break;
+                case 4:
+                    nodes = [
+                        { id: `node-${nextNodeId++}`, x: 300, y: 100, text: 'event', class: 'node-orange' },
+                        { id: `node-${nextNodeId++}`, x: 200, y: 300, text: 'response 1', class: 'node-blue' },
+                        { id: `node-${nextNodeId++}`, x: 400, y: 300, text: 'response 2', class: 'node-green' }
+                    ];
+                    conns = [
+                        { id: `arrow-${nextArrowId++}`, from: 'node-1', to: 'node-2', label: '+' },
+                        { id: `arrow-${nextArrowId++}`, from: 'node-1', to: 'node-3', label: '-' }
+                    ];
+                    texts = [
+                        { id: `textbox-${nextTextboxId++}`, x: 300, y: 400, text: 'Diverging Paths', color: '#FF5252', size: 'large' }
+                    ];
+                    title.textContent = 'Diverging Flow';
+                    subheading.textContent = 'Template 4';
+                    break;
+            }
+
+            nodes.forEach(node => {
+                nodeData[node.id] = { x: node.x, y: node.y, r: 50, text: node.text, class: node.class };
+                addNodeToSVG(node.id);
+                circleState[node.id] = 0;
+            });
+            connections = conns;
+            texts.forEach(textbox => {
+                textboxData[textbox.id] = { x: textbox.x, y: textbox.y, text: textbox.text, color: textbox.color, size: textbox.size };
+                addTextboxToSVG(textbox.id);
+            });
+            updateArrows();
+            calculateInitialViewBox();
+            updateViewBox();
+            deselectAll();
+            toggleMenuPopup();
+            toggleSimulationMode(false);
         }
     </script>
 </body>

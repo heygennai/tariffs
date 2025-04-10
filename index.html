@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Interactive Flowchart with Simulation</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="https://unpkg.com/@material-ui/core@latest/umd/material-ui.production.min.css">
@@ -29,6 +29,7 @@
             justify-content: center;
             align-items: center;
             position: relative;
+            touch-action: none; /* Prevents zooming/panning on mobile for top container */
         }
         #title {
             font-size: 24px;
@@ -128,6 +129,7 @@
             z-index: 1000;
             height: 64px;
             box-sizing: border-box;
+            touch-action: none; /* Prevents zooming/panning on mobile for bottom container */
         }
         .menu-bar button {
             padding: 6px 16px;
@@ -322,6 +324,7 @@
                 padding: 4px 8px;
                 box-shadow: 0 -2px 10px rgba(0,0,0,0.12);
                 z-index: 1000;
+                touch-action: none; /* Ensure no zooming/panning */
             }
             .menu-bar button {
                 font-size: 12px;
@@ -511,10 +514,12 @@
             popup.style.left = '50%';
             popup.style.transform = 'translate(-50%, -50%)';
             popup.style.display = 'block';
+            popup.style.touchAction = 'none'; // Prevents zooming on mobile when editing text
             const input = document.createElement('input');
             input.type = 'text';
             input.value = currentText;
             input.style.display = 'block';
+            input.style.touchAction = 'none'; // Prevents zooming on mobile for input
             input.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     const newText = input.value.trim();
@@ -526,6 +531,7 @@
             });
             const okButton = document.createElement('button');
             okButton.textContent = 'OK';
+            okButton.style.touchAction = 'none'; // Prevents zooming on mobile for button
             okButton.onclick = () => {
                 const newText = input.value.trim();
                 if (newText) {
@@ -539,6 +545,7 @@
             input.focus();
             input.select();
             popup.addEventListener('click', (e) => e.stopPropagation());
+            popup.addEventListener('touchstart', (e) => e.stopPropagation());
         }
 
         title.addEventListener('dblclick', (e) => {
@@ -791,12 +798,22 @@
             upButton.setAttribute('d', `M ${node.x - 10} ${node.y - 35} L ${node.x + 10} ${node.y - 35} L ${node.x} ${node.y - 45} Z`);
             upButton.setAttribute('class', 'triangle-button triangle-up');
             upButton.addEventListener('click', (e) => { e.stopPropagation(); handleTriangleClick(id, 'up'); });
+            upButton.addEventListener('touchstart', (e) => { 
+                e.preventDefault(); 
+                e.stopPropagation(); 
+                if (simulationMode) handleTriangleClick(id, 'up'); 
+            });
             controls.appendChild(upButton);
 
             const downButton = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             downButton.setAttribute('d', `M ${node.x - 10} ${node.y + 35} L ${node.x + 10} ${node.y + 35} L ${node.x} ${node.y + 45} Z`);
             downButton.setAttribute('class', 'triangle-button triangle-down');
             downButton.addEventListener('click', (e) => { e.stopPropagation(); handleTriangleClick(id, 'down'); });
+            downButton.addEventListener('touchstart', (e) => { 
+                e.preventDefault(); 
+                e.stopPropagation(); 
+                if (simulationMode) handleTriangleClick(id, 'down'); 
+            });
             controls.appendChild(downButton);
 
             group.appendChild(controls);
@@ -1694,7 +1711,7 @@
                         { id: `arrow-${nextArrowId++}`, from: 'node-1', to: 'node-2', label: '+' },
                         { id: `arrow-${nextArrowId++}`, from: 'node-1', to: 'node-3', label: '-' }
                     ];
-                    texts = [
+		    texts = [
                         { id: `textbox-${nextTextboxId++}`, x: 300, y: 400, text: 'Diverging Paths', color: '#FF5252', size: 'large' }
                     ];
                     title.textContent = 'Diverging Flow';

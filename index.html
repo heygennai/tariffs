@@ -29,7 +29,7 @@
             justify-content: center;
             align-items: center;
             position: relative;
-            touch-action: none; /* Prevents zooming/panning on mobile for top container */
+            touch-action: none;
         }
         #title {
             font-size: 24px;
@@ -129,7 +129,7 @@
             z-index: 1000;
             height: 64px;
             box-sizing: border-box;
-            touch-action: none; /* Prevents zooming/panning on mobile for bottom container */
+            touch-action: none;
         }
         .menu-bar button {
             padding: 6px 16px;
@@ -214,13 +214,13 @@
         #file-popup {
             top: 72px;
             right: 16px;
-            width: 152px; /* 120px button width + 16px padding left + 16px padding right */
+            width: 152px;
         }
         #menu-popup {
             top: 72px;
             left: 16px;
             text-align: left;
-            width: 200px; /* Wider than the buttons (120px) for better aesthetics */
+            width: 200px;
         }
         .popup button {
             padding: 6px 16px;
@@ -267,7 +267,7 @@
             border-radius: 4px;
             font-family: 'Roboto', Arial, sans-serif;
             font-size: 14px;
-            z-index: 4000; /* Higher z-index to appear above all layers */
+            z-index: 4000;
             display: none;
         }
         #file-input {
@@ -314,8 +314,8 @@
         }
         @media (max-width: 600px) {
             .menu-bar {
-                position: fixed; /* Ensure it stays at the bottom */
-                bottom: 0; /* Pin to bottom */
+                position: fixed;
+                bottom: 0;
                 left: 0;
                 width: 100%;
                 height: 100px;
@@ -324,7 +324,7 @@
                 padding: 4px 8px;
                 box-shadow: 0 -2px 10px rgba(0,0,0,0.12);
                 z-index: 1000;
-                touch-action: none; /* Ensure no zooming/panning */
+                touch-action: none;
             }
             .menu-bar button {
                 font-size: 12px;
@@ -343,7 +343,7 @@
                 display: block;
             }
             #flowchart-container {
-                height: calc(100vh - 164px); /* Adjust for taller menu bar in mobile */
+                height: calc(100vh - 164px);
             }
         }
     </style>
@@ -354,8 +354,8 @@
             <i class="material-icons" style="vertical-align: middle;">menu</i>
         </button>
         <div>
-            <h1 id="title">Flowchart Title</h1>
-            <p id="subheading">Subheading Text</p>
+            <h1 id="title">U.S. Imposes Tariffs</h1>
+            <p id="subheading">Impact to U.S. vs Australian Economy</p>
         </div>
         <div id="top-buttons">
             <button onclick="toggleFilePopup()">
@@ -398,11 +398,12 @@
         <input type="file" id="file-input" accept=".txt" onchange="loadFlowchart(event)">
     </div>
     <div id="menu-popup" class="popup">
-        <button class="start-fresh-btn" onclick="startFresh()">Start Fresh</button>
-        <button onclick="loadTemplate(1)">Template 1</button>
-        <button onclick="loadTemplate(2)">Template 2</button>
-        <button onclick="loadTemplate(3)">Template 3</button>
-        <button onclick="loadTemplate(4)">Template 4</button>
+        <button class="start-fresh-btn" onclick="startFresh()">New Chart</button>
+        <!<button onclick="loadTemplate(1)"></button>
+        <!<button onclick="loadTemplate(2)"></button>
+        <!<button onclick="loadTemplate(3)"></button>
+        <!<button onclick="loadTemplate(4)"></button>
+        <p>Make your own flowchart!</p>
         <p>© 2025 simulations.cc</p>
     </div>
 
@@ -450,25 +451,30 @@
         const maxCount = 20;
 
         const initialNodes = [
-            { id: `node-${nextNodeId++}`, x: 150, y: 50, text: 'automation', class: 'node-red' },
-            { id: `node-${nextNodeId++}`, x: 350, y: 50, text: 'profits', class: 'node-red' },
-            { id: `node-${nextNodeId++}`, x: 500, y: 150, text: 'tax revenue', class: 'node-green' },
-            { id: `node-${nextNodeId++}`, x: 150, y: 250, text: 'job loss', class: 'node-blue' },
-            { id: `node-${nextNodeId++}`, x: 350, y: 250, text: 'frustration', class: 'node-blue' },
-            { id: `node-${nextNodeId++}`, x: 500, y: 350, text: 'political unrest', class: 'node-blue' }
+            { id: `node-${nextNodeId++}`, x: 150, y: 50, text: 'aus export costs to u.s.', class: 'node-green' },
+            { id: `node-${nextNodeId++}`, x: 350, y: 50, text: 'aus export revenue', class: 'node-green' },
+            { id: `node-${nextNodeId++}`, x: 540, y: 70, text: 'aus growth', class: 'node-green' },
+            { id: `node-${nextNodeId++}`, x: 150, y: 250, text: 'u.s. import costs', class: 'node-blue' },
+            { id: `node-${nextNodeId++}`, x: 350, y: 250, text: 'demand for imports', class: 'node-blue' },
+            { id: `node-${nextNodeId++}`, x: 540, y: 250, text: 'demand for u.s. goods', class: 'node-blue' },
+            { id: `node-${nextNodeId++}`, x: -20, y: 170, text: 'u.s. imposes new tariffs', class: 'node-red' },
+            { id: `node-${nextNodeId++}`, x: 200, y: 400, text: 'u.s. consumer prices', class: 'node-blue' },
+            { id: `node-${nextNodeId++}`, x: 400, y: 400, text: 'u.s. inflation', class: 'node-blue' }
         ];
 
         const initialConnections = [
-            { id: `arrow-${nextArrowId++}`, from: 'node-1', to: 'node-2', label: '+' },
+            { id: `arrow-${nextArrowId++}`, from: 'node-1', to: 'node-2', label: '-' },
             { id: `arrow-${nextArrowId++}`, from: 'node-2', to: 'node-3', label: '+' },
-            { id: `arrow-${nextArrowId++}`, from: 'node-1', to: 'node-4', label: '+' },
-            { id: `arrow-${nextArrowId++}`, from: 'node-4', to: 'node-5', label: '+' },
-            { id: `arrow-${nextArrowId++}`, from: 'node-5', to: 'node-6', label: '+' }
+            { id: `arrow-${nextArrowId++}`, from: 'node-4', to: 'node-1', label: '+' },
+            { id: `arrow-${nextArrowId++}`, from: 'node-4', to: 'node-5', label: '-' },
+            { id: `arrow-${nextArrowId++}`, from: 'node-5', to: 'node-6', label: '-' },
+            { id: `arrow-${nextArrowId++}`, from: 'node-7', to: 'node-4', label: '+' },
+            { id: `arrow-${nextArrowId++}`, from: 'node-4', to: 'node-8', label: '+' },
+            { id: `arrow-${nextArrowId++}`, from: 'node-8', to: 'node-9', label: '+' }
         ];
 
         const initialTextboxes = [
-            { id: `textbox-${nextTextboxId++}`, x: 300, y: 150, text: 'Sample Textbox 1', color: '#000000', size: 'medium' },
-            { id: `textbox-${nextTextboxId++}`, x: 200, y: 350, text: 'Sample Textbox 2', color: '#FF5252', size: 'large' }
+            { id: `textbox-${nextTextboxId++}`, x: -20, y: 340, text: ' ', color: '#000000', size: 'medium' }
         ];
 
         initialNodes.forEach(node => {
@@ -514,12 +520,12 @@
             popup.style.left = '50%';
             popup.style.transform = 'translate(-50%, -50%)';
             popup.style.display = 'block';
-            popup.style.touchAction = 'none'; // Prevents zooming on mobile when editing text
+            popup.style.touchAction = 'none';
             const input = document.createElement('input');
             input.type = 'text';
             input.value = currentText;
             input.style.display = 'block';
-            input.style.touchAction = 'none'; // Prevents zooming on mobile for input
+            input.style.touchAction = 'none';
             input.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     const newText = input.value.trim();
@@ -531,7 +537,7 @@
             });
             const okButton = document.createElement('button');
             okButton.textContent = 'OK';
-            okButton.style.touchAction = 'none'; // Prevents zooming on mobile for button
+            okButton.style.touchAction = 'none';
             okButton.onclick = () => {
                 const newText = input.value.trim();
                 if (newText) {
@@ -798,10 +804,10 @@
             upButton.setAttribute('d', `M ${node.x - 10} ${node.y - 35} L ${node.x + 10} ${node.y - 35} L ${node.x} ${node.y - 45} Z`);
             upButton.setAttribute('class', 'triangle-button triangle-up');
             upButton.addEventListener('click', (e) => { e.stopPropagation(); handleTriangleClick(id, 'up'); });
-            upButton.addEventListener('touchstart', (e) => { 
-                e.preventDefault(); 
-                e.stopPropagation(); 
-                if (simulationMode) handleTriangleClick(id, 'up'); 
+            upButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (simulationMode) handleTriangleClick(id, 'up');
             });
             controls.appendChild(upButton);
 
@@ -809,10 +815,10 @@
             downButton.setAttribute('d', `M ${node.x - 10} ${node.y + 35} L ${node.x + 10} ${node.y + 35} L ${node.x} ${node.y + 45} Z`);
             downButton.setAttribute('class', 'triangle-button triangle-down');
             downButton.addEventListener('click', (e) => { e.stopPropagation(); handleTriangleClick(id, 'down'); });
-            downButton.addEventListener('touchstart', (e) => { 
-                e.preventDefault(); 
-                e.stopPropagation(); 
-                if (simulationMode) handleTriangleClick(id, 'down'); 
+            downButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (simulationMode) handleTriangleClick(id, 'down');
             });
             controls.appendChild(downButton);
 
@@ -913,7 +919,7 @@
                 if (arrowsBetweenPair.length === 1) {
                     curveOffset = 20 * curveFactor;
                 } else {
-                    const hasOpposite = arrowsBetweenPair.some(a => 
+                    const hasOpposite = arrowsBetweenPair.some(a =>
                         (a.from === conn.to && a.to === conn.from)
                     );
                     if (hasOpposite && arrowsBetweenPair.length === 2) {
@@ -1283,7 +1289,7 @@
                 const addTextboxBtn = document.createElement('button');
                 addTextboxBtn.textContent = 'Add Textbox';
                 addTextboxBtn.onclick = addTextbox;
-                addTextboxBtn.style.marginLeft = '8px'; // Added gap between Add Circle and Add Textbox
+                addTextboxBtn.style.marginLeft = '8px';
                 menuOptions.appendChild(addTextboxBtn);
             } else {
                 addCircleBtn.style.display = 'none';
@@ -1367,6 +1373,7 @@
             const group = nodesGroup.querySelector(`[data-id="${selectedCircle}"]`);
             nodesGroup.removeChild(group);
             connections = connections.filter(conn => conn.from !== selectedCircle && conn.to !== selectedCircle);
+            updateArrows();
             deselectAll();
         }
 
@@ -1391,6 +1398,7 @@
         function deleteArrow() {
             if (!selectedArrow) return;
             connections = connections.filter(conn => conn.id !== selectedArrow);
+            updateArrows();
             deselectAll();
         }
 
@@ -1430,6 +1438,8 @@
             menuPopup.style.display = menuPopup.style.display === 'block' ? 'none' : 'block';
         }
 
+        // --- SAVE FUNCTION ---
+        // Downloads flowchart data as a .txt file
         function saveFlowchart() {
             const data = {
                 title: title.textContent,
@@ -1443,73 +1453,61 @@
                 viewBox: { width: viewBoxWidth, height: viewBoxHeight, x: viewBoxX, y: viewBoxY },
                 circleState: circleState
             };
-            const jsonString = JSON.stringify(data, null, 2);
+            // Convert the flowchart data to a JSON string
+            const jsonString = JSON.stringify(data, null, 2); // Pretty-print JSON
+            // Create a Blob object containing the JSON data as plain text
             const blob = new Blob([jsonString], { type: 'text/plain' });
+            // Create a temporary URL for the Blob
             const url = window.URL.createObjectURL(blob);
+            // Create a temporary anchor element for downloading
             const a = document.createElement('a');
             a.href = url;
+            // Set the filename for the downloaded file (using .txt extension)
             a.download = 'flowchart.txt';
+            // Append the anchor to the body (required for Firefox)
             document.body.appendChild(a);
+            // Programmatically click the anchor to trigger the download
             a.click();
+            // Remove the anchor from the body
             document.body.removeChild(a);
+            // Revoke the temporary URL to free up memory
             window.URL.revokeObjectURL(url);
+            // Hide the file popup after saving
             toggleFilePopup();
         }
 
+        // --- LOAD FUNCTION ---
         function loadFlowchart(event) {
             const file = event.target.files[0];
-            if (!file) return;
+            if (!file || !file.name.toLowerCase().endsWith('.txt')) { if(file) alert('Please select a valid .txt file.'); event.target.value = null; return; }
             const reader = new FileReader();
             reader.onload = function(e) {
+                let fileContent = e.target.result;
                 try {
-                    const data = JSON.parse(e.target.result);
-                    nodesGroup.innerHTML = '';
-                    arrowsGroup.innerHTML = '';
-                    arrowLabelsGroup.innerHTML = '';
-                    textboxesGroup.innerHTML = '';
-                    movingTrianglesGroup.innerHTML = '';
-                    nodeData = {};
-                    connections = [];
-                    textboxData = {};
-                    circleState = {};
+                    if (fileContent.charCodeAt(0) === 0xFEFF) fileContent = fileContent.substring(1);
+                    fileContent = fileContent.trim(); if (!fileContent) throw new Error("File is empty.");
+                    const data = JSON.parse(fileContent);
+                    if (typeof data !== 'object' || data === null || typeof data.nodes !== 'object' || !Array.isArray(data.connections)) throw new Error("Invalid flowchart data structure.");
 
-                    title.textContent = data.title || 'Flowchart Title';
-                    subheading.textContent = data.subheading || 'Subheading Text';
-                    nodeData = data.nodes || {};
-                    connections = data.connections || [];
-                    textboxData = data.textboxes || {};
-                    nextNodeId = data.nextNodeId || 1;
-                    nextArrowId = data.nextArrowId || 1;
-                    nextTextboxId = data.nextTextboxId || 1;
+                    nodesGroup.innerHTML = ''; arrowsGroup.innerHTML = ''; arrowLabelsGroup.innerHTML = ''; textboxesGroup.innerHTML = ''; movingTrianglesGroup.innerHTML = '';
+                    title.textContent = data.title || 'Flowchart Title'; subheading.textContent = data.subheading || 'Subheading Text';
+                    nodeData = data.nodes || {}; connections = data.connections || []; textboxData = data.textboxes || {};
+                    const maxNodeNum = Math.max(0, ...Object.keys(nodeData).map(id => parseInt(id.split('-')[1] || 0))); const maxArrowNum = Math.max(0, ...connections.map(c => parseInt(c.id.split('-')[1] || 0))); const maxTextboxNum = Math.max(0, ...Object.keys(textboxData).map(id => parseInt(id.split('-')[1] || 0)));
+                    nextNodeId = Math.max(data.nextNodeId || 1, maxNodeNum + 1); nextArrowId = Math.max(data.nextArrowId || 1, maxArrowNum + 1); nextTextboxId = Math.max(data.nextTextboxId || 1, maxTextboxNum + 1);
                     Object.assign(circleState, data.circleState || {});
+                    for (const id in nodeData) if (!(id in circleState)) circleState[id] = 0;
 
-                    for (const id in nodeData) {
-                        addNodeToSVG(id);
-                        if (!(id in circleState)) circleState[id] = 0;
-                    }
-                    for (const id in textboxData) {
-                        addTextboxToSVG(id);
-                    }
-                    updateArrows();
-
-                    if (data.viewBox) {
-                        viewBoxWidth = data.viewBox.width;
-                        viewBoxHeight = data.viewBox.height;
-                        viewBoxX = data.viewBox.x;
-                        viewBoxY = data.viewBox.y;
-                    } else {
-                        calculateInitialViewBox();
-                    }
-                    updateViewBox();
-                    deselectAll();
-                    toggleSimulationMode(simulationMode);
-                } catch (error) {
-                    alert('Invalid file format. Please upload a valid flowchart text file.');
-                    console.error(error);
-                }
+                    for (const id in nodeData) addNodeToSVG(id); for (const id in textboxData) addTextboxToSVG(id); updateArrows();
+                    if (data.viewBox && typeof data.viewBox.x === 'number') { viewBoxX = data.viewBox.x; viewBoxY = data.viewBox.y; viewBoxWidth = data.viewBox.width; viewBoxHeight = data.viewBox.height; } else { calculateInitialViewBox(); }
+                    updateViewBox(); deselectAll();
+                    if (simulationMode) { simulationMode = false; toggleSimulationMode(false); } else { updateMenuOptions(); }
+                    toggleFilePopup();
+                } catch (error) { alert(`Error loading flowchart: ${error.message}\nPlease ensure the file is valid.`); console.error("Flowchart Loading Error:", error); console.error("Content Snippet:", fileContent.substring(0, 500)); } finally { event.target.value = null; }
             };
+            reader.onerror = function(e) { alert('Error reading file.'); console.error("FileReader error:", reader.error); event.target.value = null; };
             reader.readAsText(file);
         }
+
 
         playButton.addEventListener('click', () => {
             simulationMode = !simulationMode;
@@ -1523,78 +1521,120 @@
                 playButton.style.backgroundColor = '#555';
                 icon.className = 'stop-icon';
                 controlButtons.forEach(button => button.style.display = 'block');
-                deselectAll();
+                // Set all circles to half-filled (10/20) when starting simulation
+                for (const id in circleState) {
+                    circleState[id] = 10; // Set initial simulation state (e.g., half full)
+                    updateCircleFill(id);
+                }
+                deselectAll(); // Cannot edit in simulation mode
             } else {
                 playButton.style.backgroundColor = '#000';
                 icon.className = 'play-icon';
                 controlButtons.forEach(button => button.style.display = 'none');
-                resetAllFills();
+                resetAllFills(); // Reset fills when stopping simulation
             }
+            // Update menu options based on whether simulation mode is active
             updateMenuOptions();
         }
 
+
         function resetAllFills() {
             for (const id in circleState) {
-                circleState[id] = 0;
-                updateCircleFill(id);
+                circleState[id] = 0; // Reset state to 0
+                updateCircleFill(id); // Update visual fill
             }
         }
 
         function handleTriangleClick(nodeId, direction) {
-            if (!simulationMode) return;
+            if (!simulationMode) return; // Only work in simulation mode
 
-            const group = nodesGroup.querySelector(`[data-id="${nodeId}"]`);
-            const fillRect = group.querySelector('.node-fill');
             const node = nodeData[nodeId];
             const canIncrease = circleState[nodeId] < maxCount;
             const canDecrease = circleState[nodeId] > 0;
 
-            if (direction === 'up') {
-                if (canIncrease) circleState[nodeId]++;
+            // Determine the change amount (e.g., +/- 1)
+            let change = 0;
+            if (direction === 'up' && canIncrease) {
+                change = 1;
+            } else if (direction === 'down' && canDecrease) {
+                change = -1;
+            }
+
+            if (change !== 0) {
+                // Update the clicked node's state and visual
+                circleState[nodeId] += change;
                 updateCircleFill(nodeId);
 
+                // Find outgoing connections from the clicked node
                 const outgoingConnections = connections.filter(conn => conn.from === nodeId);
-                outgoingConnections.forEach(conn => {
-                    const targetNode = nodeData[conn.to];
-                    const effectiveDirection = conn.label === '+' ? 'up' : 'down';
-                    createMovingTriangle(nodeData[nodeId], targetNode, effectiveDirection);
-                    if (effectiveDirection === 'up' && circleState[conn.to] < maxCount) {
-                        circleState[conn.to]++;
-                        updateCircleFill(conn.to);
-                    } else if (effectiveDirection === 'down' && circleState[conn.to] > 0) {
-                        circleState[conn.to]--;
-                        updateCircleFill(conn.to);
-                    }
-                });
-            } else if (direction === 'down') {
-                if (canDecrease) circleState[nodeId]--;
-                updateCircleFill(nodeId);
 
-                const outgoingConnections = connections.filter(conn => conn.from === nodeId);
+                // Process each outgoing connection
                 outgoingConnections.forEach(conn => {
                     const targetNode = nodeData[conn.to];
-                    const effectiveDirection = conn.label === '+' ? 'down' : 'up';
+                    if (!targetNode) return; // Skip if target node doesn't exist
+
+                    // Determine the effect on the target node (+ or - influence)
+                    const influence = conn.label === '+' ? 1 : -1;
+                    // Calculate the effective direction of the change on the target
+                    const effectiveChange = change * influence;
+                    const effectiveDirection = effectiveChange > 0 ? 'up' : 'down';
+
+                    // Animate the moving triangle
                     createMovingTriangle(nodeData[nodeId], targetNode, effectiveDirection);
-                    if (effectiveDirection === 'up' && circleState[conn.to] < maxCount) {
-                        circleState[conn.to]++;
-                        updateCircleFill(conn.to);
-                    } else if (effectiveDirection === 'down' && circleState[conn.to] > 0) {
-                        circleState[conn.to]--;
-                        updateCircleFill(conn.to);
-                    }
+
+                    // Propagate the change recursively
+                    propagateChange(conn.to, effectiveChange);
                 });
             }
         }
 
+        function propagateChange(targetNodeId, changeAmount) {
+            const targetNode = nodeData[targetNodeId];
+            if (!targetNode || changeAmount === 0) return; // Stop if node doesn't exist or no change
+
+            const currentState = circleState[targetNodeId];
+            const newState = Math.max(0, Math.min(maxCount, currentState + changeAmount)); // Clamp between 0 and maxCount
+            const actualChange = newState - currentState; // The actual change that occurred after clamping
+
+            if (actualChange !== 0) {
+                // Update the target node's state and visual
+                circleState[targetNodeId] = newState;
+                updateCircleFill(targetNodeId);
+
+                // Find further outgoing connections
+                const furtherConnections = connections.filter(conn => conn.from === targetNodeId);
+
+                // Propagate the actual change further
+                furtherConnections.forEach(conn => {
+                    const nextTargetNode = nodeData[conn.to];
+                    if (!nextTargetNode) return;
+
+                    const influence = conn.label === '+' ? 1 : -1;
+                    const nextChangeAmount = actualChange * influence; // Use the actual change for propagation
+                    const nextEffectiveDirection = nextChangeAmount > 0 ? 'up' : 'down';
+
+                    // Animate
+                    createMovingTriangle(targetNode, nextTargetNode, nextEffectiveDirection);
+
+                    // Recursive call
+                    propagateChange(conn.to, nextChangeAmount);
+                });
+            }
+        }
+
+
         function updateCircleFill(nodeId) {
             const node = nodeData[nodeId];
-            const percentage = circleState[nodeId] / maxCount;
+            const percentage = (circleState[nodeId] || 0) / maxCount; // Use 0 if state is undefined
             const height = node.r * 2 * percentage;
             const y = node.r - height;
             const group = nodesGroup.querySelector(`[data-id="${nodeId}"]`);
+            if (!group) return; // Node might have been deleted
             const fillRect = group.querySelector('.node-fill');
-            fillRect.setAttribute('y', y);
-            fillRect.setAttribute('height', height);
+            if (fillRect) {
+                fillRect.setAttribute('y', y);
+                fillRect.setAttribute('height', height);
+            }
         }
 
         function createMovingTriangle(fromNode, toNode, direction) {
@@ -1604,19 +1644,39 @@
             const startY = fromNode.y;
             const endX = toNode.x;
             const endY = toNode.y;
-            triangle.setAttribute('d', `M ${startX - 7} ${startY} L ${startX + 7} ${startY} L ${startX} ${startY - 10} Z`);
+
+            // Define triangle shape pointing up
+            const trianglePath = `M ${-7} ${0} L ${7} ${0} L ${0} ${-10} Z`;
+            triangle.setAttribute('d', trianglePath);
+
+            // Initial position and orientation
+            let initialTransform = `translate(${startX}, ${startY})`;
             if (direction === 'down') {
-                triangle.setAttribute('transform', `translate(${startX}, ${startY}) rotate(180) translate(${-startX}, ${-startY})`);
+                 initialTransform += ` rotate(180)`; // Rotate if moving down
             }
+            triangle.setAttribute('transform', initialTransform);
+
             movingTrianglesGroup.appendChild(triangle);
 
-            setTimeout(() => {
-                triangle.setAttribute('transform', `translate(${endX - startX}, ${endY - startY})` + (direction === 'down' ? ` translate(${startX}, ${startY}) rotate(180) translate(${-startX}, ${-startY})` : ''));
+            // Use requestAnimationFrame for smoother start
+            requestAnimationFrame(() => {
+                // Target position and orientation
+                let finalTransform = `translate(${endX}, ${endY})`;
+                 if (direction === 'down') {
+                    finalTransform += ` rotate(180)`; // Maintain rotation if moving down
+                }
+                triangle.style.transition = 'transform 1s linear'; // Apply CSS transition
+                triangle.setAttribute('transform', finalTransform);
+
+                // Remove the triangle after the animation duration
                 setTimeout(() => {
-                    triangle.remove();
-                }, 1000);
-            }, 10);
+                    if (triangle.parentNode) { // Check if still attached before removing
+                        triangle.remove();
+                    }
+                }, 1000); // Matches the transition duration
+            });
         }
+
 
         function startFresh() {
             nodesGroup.innerHTML = '';
@@ -1637,26 +1697,26 @@
             updateViewBox();
             deselectAll();
             toggleMenuPopup();
-            toggleSimulationMode(false);
+            // Ensure simulation mode is off when starting fresh
+            if (simulationMode) {
+                simulationMode = false;
+                toggleSimulationMode(false);
+            } else {
+                 // Still need to reset button appearance if it was already off
+                 const icon = playButton.querySelector('div');
+                 playButton.style.backgroundColor = '#000';
+                 icon.className = 'play-icon';
+            }
         }
 
+
         function loadTemplate(templateNumber) {
-            nodesGroup.innerHTML = '';
-            arrowsGroup.innerHTML = '';
-            arrowLabelsGroup.innerHTML = '';
-            textboxesGroup.innerHTML = '';
-            movingTrianglesGroup.innerHTML = '';
-            nodeData = {};
-            connections = [];
-            textboxData = {};
-            circleState = {};
-            nextNodeId = 1;
-            nextArrowId = 1;
-            nextTextboxId = 1;
+            // Start fresh before loading template
+            startFresh();
 
             let nodes, conns, texts;
             switch (templateNumber) {
-                case 1:
+                case 1: // Basic Flow
                     nodes = [
                         { id: `node-${nextNodeId++}`, x: 200, y: 100, text: 'input', class: 'node-blue' },
                         { id: `node-${nextNodeId++}`, x: 400, y: 100, text: 'process', class: 'node-green' },
@@ -1670,7 +1730,7 @@
                     title.textContent = 'Basic Flow';
                     subheading.textContent = 'Template 1';
                     break;
-                case 2:
+                case 2: // Simple Path
                     nodes = [
                         { id: `node-${nextNodeId++}`, x: 300, y: 100, text: 'start', class: 'node-purple' },
                         { id: `node-${nextNodeId++}`, x: 300, y: 300, text: 'end', class: 'node-orange' }
@@ -1684,7 +1744,7 @@
                     title.textContent = 'Simple Flow';
                     subheading.textContent = 'Template 2';
                     break;
-                case 3:
+                case 3: // Converging Flow
                     nodes = [
                         { id: `node-${nextNodeId++}`, x: 200, y: 200, text: 'source', class: 'node-red' },
                         { id: `node-${nextNodeId++}`, x: 400, y: 100, text: 'step 1', class: 'node-blue' },
@@ -1701,7 +1761,7 @@
                     title.textContent = 'Converging Flow';
                     subheading.textContent = 'Template 3';
                     break;
-                case 4:
+                case 4: // Diverging Flow
                     nodes = [
                         { id: `node-${nextNodeId++}`, x: 300, y: 100, text: 'event', class: 'node-orange' },
                         { id: `node-${nextNodeId++}`, x: 200, y: 300, text: 'response 1', class: 'node-blue' },
@@ -1709,33 +1769,46 @@
                     ];
                     conns = [
                         { id: `arrow-${nextArrowId++}`, from: 'node-1', to: 'node-2', label: '+' },
-                        { id: `arrow-${nextArrowId++}`, from: 'node-1', to: 'node-3', label: '-' }
+                        { id: `arrow-${nextArrowId++}`, from: 'node-1', to: 'node-3', label: '-' } // Example of negative influence
                     ];
-		    texts = [
+                    texts = [
                         { id: `textbox-${nextTextboxId++}`, x: 300, y: 400, text: 'Diverging Paths', color: '#FF5252', size: 'large' }
                     ];
                     title.textContent = 'Diverging Flow';
                     subheading.textContent = 'Template 4';
                     break;
+                 default: // Should not happen, but good practice
+                    return;
             }
 
+            // Add nodes from the template
             nodes.forEach(node => {
                 nodeData[node.id] = { x: node.x, y: node.y, r: 50, text: node.text, class: node.class };
                 addNodeToSVG(node.id);
-                circleState[node.id] = 0;
+                circleState[node.id] = 0; // Initialize simulation state for template nodes
             });
+            // Set connections from the template
             connections = conns;
+            // Add textboxes from the template
             texts.forEach(textbox => {
                 textboxData[textbox.id] = { x: textbox.x, y: textbox.y, text: textbox.text, color: textbox.color, size: textbox.size };
                 addTextboxToSVG(textbox.id);
             });
+
+            // Update visuals
             updateArrows();
-            calculateInitialViewBox();
+            calculateInitialViewBox(); // Recalculate viewbox for the template content
             updateViewBox();
+            // Ensure clean state
             deselectAll();
-            toggleMenuPopup();
-            toggleSimulationMode(false);
+            toggleMenuPopup(); // Close the menu popup
+            // Make sure simulation mode is off
+            if (simulationMode) {
+                 simulationMode = false;
+                 toggleSimulationMode(false);
+            }
         }
+
     </script>
 </body>
 </html>

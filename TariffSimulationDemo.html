@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Flowchart</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://unpkg.com/@material-ui/core@latest/umd/material-ui.production.min.css">
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            padding-bottom: 64px;
+            overflow: hidden;
+        }
+        #title-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 64px;
+            text-align: center;
+            background-color: #fff;
+            z-index: 1000;
+            padding: 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        #title {
+            font-size: 24px;
+            margin: 0;
+            cursor: pointer;
+            line-height: 1.2;
+        }
+        #subheading {
+            font-size: 16px;
+            margin: 0;
+            color: #666;
+            cursor: pointer;
+            line-height: 1.2;
+        }
+        #top-buttons {
+            position: absolute;
+            right: 16px;
+            display: flex;
+            gap: 8px;
+        }
+        #top-buttons button {
+            padding: 6px 16px;
+            font-size: 14px;
+            font-family: 'Roboto', Arial, sans-serif;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #f5f5f5;
+            color: #212121;
+            transition: background-color 0.2s;
+        }
+        #top-buttons button:hover { background-color: #e0e0e0; }
+        #top-buttons button:active { background-color: #bdbdbd; }
+        #flowchart-container {
+            width: 100%;
+            height: calc(100vh - 128px);
+            position: absolute;
+            top: 64px;
+        }
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+        .node {
+            stroke-width: 2;
+            cursor: move;
+        }
+        .node-automation, .node-profits { stroke: #f44336; }
+        .node-black { stroke: #000000; }
+        .node-tax-revenue { stroke: #4caf50; }
+        .node-job-loss, .node-frustration, .node-political-unrest { stroke: #00b7eb; }
+        .node-text {
+            font-size: 14px;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            font-family: 'Roboto', Arial, sans-serif;
+            text-transform: lowercase;
+            cursor: move;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        .arrow {
+            stroke: #757575;
+            stroke-width: 1;
+            fill: none;
+            cursor: pointer;
+        }
+        .arrow-label {
+            font-size: 14px;
+            text-anchor: middle;
+            font-family: 'Roboto', Arial, sans-serif;
+            cursor: pointer;
+        }
+        .menu-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #ffffff;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.12);
+            z-index: 1000;
+            height: 64px;
+            box-sizing: border-box;
+        }
+        .menu-bar button {
+            padding: 6px 16px;
+            font-size: 14px;
+            font-family: 'Roboto', Arial, sans-serif;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #f5f5f5;
+            color: #212121;
+            transition: background-color 0.2s;
+        }
+        .menu-bar button:hover { background-color: #e0e0e0; }
+        .menu-bar button:active { background-color: #bdbdbd; }
+        #add-circle-btn {
+            background-color: #000000;
+            color: #ffffff;
+        }
+        #add-circle-btn:hover { background-color: #333333; }
+        #add-circle-btn:active { background-color: #666666; }
+        #menu-options {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #ffffff;
+            padding: 16px;
+            border-radius: 4px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            z-index: 2000;
+        }
+        .popup input {
+            margin-bottom: 8px;
+            padding: 8px;
+            width: 200px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-family: 'Roboto', Arial, sans-serif;
+        }
+        .popup button {
+            padding: 6px 16px;
+            border-radius: 4px;
+            background-color: #3f51b5;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+        }
+        .popup button:hover { background-color: #303f9f; }
+        #arrow-prompt {
+            position: fixed;
+            bottom: 72px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-family: 'Roboto', Arial, sans-serif;
+            font-size: 14px;
+            z-index: 1000;
+            display: none;
+        }
+        #file-input {
+            display: none;
+        }
+        @media (max-width: 600px) {
+            .menu-bar {
+                height: 100px;
+                flex-wrap: wrap;
+                justify-content: center;
+                padding: 4px 8px;
+            }
+            .menu-bar button {
+                font-size: 12px;
+                padding: 4px 12px;
+            }
+            #menu-options {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="title-container">
+        <div>
+            <h1 id="title">Flowchart Title</h1>
+            <p id="subheading">Subheading Text</p>
+        </div>
+        <div id="top-buttons">
+            <button onclick="saveFlowchart()">Save</button>
+            <button onclick="document.getElementById('file-input').click()">Upload</button>
+            <input type="file" id="file-input" accept=".txt" onchange="loadFlowchart(event)">
+        </div>
+    </div>
+    <div id="flowchart-container">
+        <svg id="flowchart">
+            <g id="nodes"></g>
+            <g id="arrows"></g>
+            <g id="arrow-labels"></g>
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#757575"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+    <div id="arrow-prompt">Click a circle to add an arrow</div>
+    <div class="menu-bar">
+        <button id="add-circle-btn" onclick="addCircle()">Add Circle</button>
+        <div id="menu-options"></div>
+    </div>
+
+    <script src="https://unpkg.com/@material-ui/core@latest/umd/material-ui.production.min.js"></script>
+    <script>
+        const container = document.getElementById('flowchart-container');
+        const svg = document.getElementById('flowchart');
+        const nodesGroup = document.getElementById('nodes');
+        const arrowsGroup = document.getElementById('arrows');
+        const arrowLabelsGroup = document.getElementById('arrow-labels');
+        const menuOptions = document.getElementById('menu-options');
+        const arrowPrompt = document.getElementById('arrow-prompt');
+        const title = document.getElementById('title');
+        const subheading = document.getElementById('subheading');
+
+        let nodeData = {};
+        let connections = [];
+        let nextNodeId = 1;
+        let nextArrowId = 1;
+        let selectedCircle = null;
+        let selectedArrow = null;
+        let addingArrow = false;
+        let viewBoxWidth = 800; // Will be recalculated
+        let viewBoxHeight = 600; // Will be recalculated
+        let zoomLevel = 1;
+        let viewBoxX = 0; // Will be recalculated
+        let viewBoxY = 0; // Will be recalculated
+        let initialPinchDistance = null;
+        let initialZoomLevel = null;
+        let isDraggingCanvas = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let dragStartViewBoxX = 0;
+        let dragStartViewBoxY = 0;
+
+        const initialNodes = [
+            { id: `node-${nextNodeId++}`, x: 150, y: 50, text: 'automation', class: 'node-automation' },
+            { id: `node-${nextNodeId++}`, x: 350, y: 50, text: 'profits', class: 'node-profits' },
+            { id: `node-${nextNodeId++}`, x: 500, y: 150, text: 'tax revenue', class: 'node-tax-revenue' },
+            { id: `node-${nextNodeId++}`, x: 150, y: 250, text: 'job loss', class: 'node-job-loss' },
+            { id: `node-${nextNodeId++}`, x: 350, y: 250, text: 'frustration', class: 'node-frustration' },
+            { id: `node-${nextNodeId++}`, x: 500, y: 350, text: 'political unrest', class: 'node-political-unrest' }
+        ];
+
+        const initialConnections = [
+            { id: `arrow-${nextArrowId++}`, from: 'node-1', to: 'node-2', label: '+' },
+            { id: `arrow-${nextArrowId++}`, from: 'node-2', to: 'node-3', label: '+' },
+            { id: `arrow-${nextNodeId++}`, from: 'node-1', to: 'node-4', label: '+' },
+            { id: `arrow-${nextArrowId++}`, from: 'node-4', to: 'node-5', label: '+' },
+            { id: `arrow-${nextArrowId++}`, from: 'node-5', to: 'node-6', label: '+' }
+        ];
+
+        initialNodes.forEach(node => {
+            nodeData[node.id] = { x: node.x, y: node.y, r: 50, text: node.text, class: node.class };
+            addNodeToSVG(node.id);
+        });
+        connections = initialConnections;
+
+        function editText(element) {
+            const popup = document.createElement('div');
+            popup.className = 'popup';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = element.textContent;
+            const okButton = document.createElement('button');
+            okButton.textContent = 'OK';
+            okButton.onclick = () => {
+                const newText = input.value;
+                if (newText) {
+                    element.textContent = newText;
+                }
+                document.body.removeChild(popup);
+            };
+            popup.appendChild(input);
+            popup.appendChild(okButton);
+            document.body.appendChild(popup);
+            input.focus();
+        }
+
+        title.addEventListener('dblclick', () => editText(title));
+        subheading.addEventListener('dblclick', () => editText(subheading));
+
+        function calculateInitialViewBox() {
+            // Calculate bounding box of all nodes
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            for (const id in nodeData) {
+                const node = nodeData[id];
+                minX = Math.min(minX, node.x - node.r);
+                maxX = Math.max(maxX, node.x + node.r);
+                minY = Math.min(minY, node.y - node.r);
+                maxY = Math.max(maxY, node.y + node.r);
+            }
+
+            // Add margin buffer (50px on each side)
+            const margin = 50;
+            const contentWidth = maxX - minX;
+            const contentHeight = maxY - minY;
+            viewBoxWidth = contentWidth + 2 * margin;
+            viewBoxHeight = contentHeight + 2 * margin;
+
+            // Center the content
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            const aspectRatio = containerWidth / containerHeight;
+            const contentAspectRatio = viewBoxWidth / viewBoxHeight;
+
+            if (aspectRatio > contentAspectRatio) {
+                // Fit to height, center horizontally
+                viewBoxWidth = viewBoxHeight * aspectRatio;
+            } else {
+                // Fit to width, center vertically
+                viewBoxHeight = viewBoxWidth / aspectRatio;
+            }
+
+            viewBoxX = minX - margin - (viewBoxWidth - contentWidth - 2 * margin) / 2;
+            viewBoxY = minY - margin - (viewBoxHeight - contentHeight - 2 * margin) / 2;
+
+            // Ensure viewBox fits within container
+            zoomLevel = 1;
+            svg.setAttribute('viewBox', `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`);
+        }
+
+        function updateViewBox() {
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            const aspectRatio = containerWidth / containerHeight;
+
+            let baseWidth = viewBoxWidth;
+            let baseHeight = viewBoxHeight;
+
+            if (aspectRatio > baseWidth / baseHeight) {
+                baseWidth = baseHeight * aspectRatio;
+            } else {
+                baseHeight = baseWidth / aspectRatio;
+            }
+
+            const zoomedWidth = baseWidth / zoomLevel;
+            const zoomedHeight = baseHeight / zoomLevel;
+
+            viewBoxWidth = zoomedWidth;
+            viewBoxHeight = zoomedHeight;
+
+            svg.setAttribute('viewBox', `${viewBoxX} ${viewBoxY} ${zoomedWidth} ${zoomedHeight}`);
+        }
+
+        window.addEventListener('resize', updateViewBox);
+        calculateInitialViewBox(); // Initial centering and sizing
+        updateViewBox();
+
+        svg.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+            zoomLevel *= zoomFactor;
+            zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 3);
+            updateViewBox();
+        });
+
+        svg.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                initialPinchDistance = Math.sqrt(
+                    Math.pow(touch1.clientX - touch2.clientX, 2) +
+                    Math.pow(touch1.clientY - touch2.clientY, 2)
+                );
+                initialZoomLevel = zoomLevel;
+            }
+        });
+
+        svg.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentPinchDistance = Math.sqrt(
+                    Math.pow(touch1.clientX - touch2.clientX, 2) +
+                    Math.pow(touch1.clientY - touch2.clientY, 2)
+                );
+                if (initialPinchDistance) {
+                    const zoomFactor = currentPinchDistance / initialPinchDistance;
+                    zoomLevel = initialZoomLevel * zoomFactor;
+                    zoomLevel = Math.min(Math.max(zoomLevel, 0.5), 3);
+                    updateViewBox();
+                }
+            }
+        });
+
+        svg.addEventListener('touchend', () => {
+            initialPinchDistance = null;
+            initialZoomLevel = null;
+        });
+
+        svg.addEventListener('mousedown', (e) => {
+            if (!e.target.closest('.draggable') && !e.target.closest('.arrow') && !e.target.closest('.arrow-label')) {
+                isDraggingCanvas = true;
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
+                dragStartViewBoxX = viewBoxX;
+                dragStartViewBoxY = viewBoxY;
+            }
+        });
+
+        svg.addEventListener('mousemove', (e) => {
+            if (isDraggingCanvas) {
+                const rect = svg.getBoundingClientRect();
+                const scaleX = viewBoxWidth / rect.width;
+                const scaleY = viewBoxHeight / rect.height;
+                const dx = (e.clientX - dragStartX) * scaleX;
+                const dy = (e.clientY - dragStartY) * scaleY;
+                viewBoxX = dragStartViewBoxX - dx;
+                viewBoxY = dragStartViewBoxY - dy;
+                updateViewBox();
+            }
+        });
+
+        svg.addEventListener('mouseup', () => {
+            isDraggingCanvas = false;
+        });
+
+        svg.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1 && !e.target.closest('.draggable') && !e.target.closest('.arrow') && !e.target.closest('.arrow-label')) {
+                isDraggingCanvas = true;
+                dragStartX = e.touches[0].clientX;
+                dragStartY = e.touches[0].clientY;
+                dragStartViewBoxX = viewBoxX;
+                dragStartViewBoxY = viewBoxY;
+            }
+        });
+
+        svg.addEventListener('touchmove', (e) => {
+            if (isDraggingCanvas && e.touches.length === 1) {
+                e.preventDefault();
+                const rect = svg.getBoundingClientRect();
+                const scaleX = viewBoxWidth / rect.width;
+                const scaleY = viewBoxHeight / rect.height;
+                const dx = (e.touches[0].clientX - dragStartX) * scaleX;
+                const dy = (e.touches[0].clientY - dragStartY) * scaleY;
+                viewBoxX = dragStartViewBoxX - dx;
+                viewBoxY = dragStartViewBoxY - dy;
+                updateViewBox();
+            }
+        });
+
+        svg.addEventListener('touchend', () => {
+            isDraggingCanvas = false;
+        });
+
+        function wrapText(text, maxWidth) {
+            const words = text.split(' ');
+            let lines = [];
+            let currentLine = words[0];
+            for (let i = 1; i < words.length; i++) {
+                const testLine = currentLine + ' ' + words[i];
+                const testWidth = getTextWidth(testLine);
+                if (testWidth <= maxWidth) {
+                    currentLine = testLine;
+                } else {
+                    lines.push(currentLine);
+                    currentLine = words[i];
+                }
+            }
+            lines.push(currentLine);
+            return lines;
+        }
+
+        function getTextWidth(text) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            context.font = '14px Roboto, Arial';
+            return context.measureText(text).width;
+        }
+
+        function addNodeToSVG(id) {
+            const node = nodeData[id];
+            const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            group.setAttribute('class', 'draggable');
+            group.setAttribute('data-id', id);
+
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', node.x);
+            circle.setAttribute('cy', node.y);
+            circle.setAttribute('r', node.r);
+            circle.setAttribute('fill', 'transparent');
+            circle.setAttribute('class', `node ${node.class}`);
+            group.appendChild(circle);
+
+            const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            textElement.setAttribute('x', node.x);
+            textElement.setAttribute('y', node.y);
+            textElement.setAttribute('class', 'node-text');
+
+            const maxWidth = node.r * 1.5;
+            const lines = wrapText(node.text, maxWidth);
+            lines.forEach((line, index) => {
+                const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                tspan.setAttribute('x', node.x);
+                tspan.setAttribute('dy', index === 0 ? `${- (lines.length - 1) * 7}px` : '14px');
+                tspan.textContent = line;
+                textElement.appendChild(tspan);
+            });
+
+            group.appendChild(textElement);
+
+            const handleCircleInteraction = (e) => {
+                e.stopPropagation();
+                if (addingArrow) {
+                    createArrowToCircle(id);
+                } else {
+                    selectCircle(id);
+                }
+            };
+
+            group.addEventListener('click', handleCircleInteraction);
+            group.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (e.touches.length === 1) {
+                    handleCircleInteraction(e);
+                }
+            });
+
+            group.addEventListener('dblclick', () => editNodeText(id));
+            group.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (e.touches.length === 2) {
+                    editNodeText(id);
+                }
+            });
+
+            group.addEventListener('mousedown', startDragging);
+            group.addEventListener('touchstart', startDraggingTouch);
+            nodesGroup.appendChild(group);
+        }
+
+        function getEdgePoint(from, to, radius) {
+            const dx = to.x - from.x;
+            const dy = to.y - from.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx);
+            return {
+                x: from.x + radius * Math.cos(angle),
+                y: from.y + radius * Math.sin(angle)
+            };
+        }
+
+        function updateArrows() {
+            arrowsGroup.innerHTML = '';
+            arrowLabelsGroup.innerHTML = '';
+            const arrowPairs = {};
+
+            connections.forEach(conn => {
+                const fromNode = nodeData[conn.from];
+                const toNode = nodeData[conn.to];
+                if (!fromNode || !toNode) return;
+
+                const start = getEdgePoint(fromNode, toNode, fromNode.r);
+                const end = getEdgePoint(toNode, fromNode, toNode.r);
+
+                const pairKey = [conn.from, conn.to].sort().join('-');
+                if (!arrowPairs[pairKey]) arrowPairs[pairKey] = [];
+                arrowPairs[pairKey].push({ id: conn.id, from: conn.from, to: conn.to, label: conn.label });
+
+                const arrowsBetweenPair = arrowPairs[pairKey];
+                const dx = end.x - start.x;
+                const dy = end.y - start.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const angle = Math.atan2(dy, dx);
+
+                const maxOffset = 30;
+                const curveFactor = Math.min(distance / 100, 1);
+                let curveOffset;
+
+                if (arrowsBetweenPair.length === 1) {
+                    curveOffset = 20 * curveFactor;
+                } else {
+                    const hasOpposite = arrowsBetweenPair.some(a => 
+                        (a.from === conn.to && a.to === conn.from)
+                    );
+                    if (hasOpposite && arrowsBetweenPair.length === 2) {
+                        const isForward = conn.from < conn.to;
+                        curveOffset = isForward ? -30 * curveFactor : 30 * curveFactor;
+                    } else {
+                        const index = arrowsBetweenPair.findIndex(a => a.id === conn.id);
+                        const direction = (index % 2 === 0) ? 1 : -1;
+                        const offsetMultiplier = Math.floor(index / 2) + 1;
+                        curveOffset = direction * maxOffset * offsetMultiplier * curveFactor;
+                    }
+                }
+
+                const midX = (start.x + end.x) / 2;
+                const midY = (start.y + end.y) / 2;
+                const controlX = midX + curveOffset * Math.cos(angle + Math.PI / 2);
+                const controlY = midY + curveOffset * Math.sin(angle + Math.PI / 2);
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', `M${start.x},${start.y} Q${controlX},${controlY} ${end.x},${end.y}`);
+                path.setAttribute('class', 'arrow');
+                path.setAttribute('marker-end', 'url(#arrowhead)');
+                path.setAttribute('data-id', conn.id);
+                path.addEventListener('click', (e) => { e.stopPropagation(); selectArrow(conn.id); });
+                path.addEventListener('touchstart', (e) => { e.preventDefault(); selectArrow(conn.id); });
+                arrowsGroup.appendChild(path);
+
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', controlX);
+                label.setAttribute('y', controlY);
+                label.setAttribute('class', 'arrow-label');
+                label.textContent = conn.label;
+                label.setAttribute('data-id', conn.id);
+                label.addEventListener('click', (e) => { e.stopPropagation(); selectArrow(conn.id); });
+                label.addEventListener('touchstart', (e) => { e.preventDefault(); selectArrow(conn.id); });
+                arrowLabelsGroup.appendChild(label);
+            });
+        }
+
+        updateArrows();
+
+        svg.addEventListener('click', (e) => {
+            if (!e.target.closest('.draggable') && !e.target.closest('.arrow') && !e.target.closest('.arrow-label')) {
+                selectedCircle = null;
+                selectedArrow = null;
+                addingArrow = false;
+                arrowPrompt.style.display = 'none';
+                closeEditPopup();
+                updateMenuOptions();
+            }
+        });
+
+        svg.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                if (!e.target.closest('.draggable') && !e.target.closest('.arrow') && !e.target.closest('.arrow-label')) {
+                    selectedCircle = null;
+                    selectedArrow = null;
+                    addingArrow = false;
+                    arrowPrompt.style.display = 'none';
+                    closeEditPopup();
+                    updateMenuOptions();
+                }
+            }
+        });
+
+        let draggedNode = null;
+        let offsetX, offsetY;
+
+        function startDragging(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            draggedNode = e.currentTarget;
+            const circle = draggedNode.querySelector('circle');
+            const rect = svg.getBoundingClientRect();
+            const scaleX = viewBoxWidth / rect.width;
+            const scaleY = viewBoxHeight / rect.height;
+            offsetX = (e.clientX - rect.left) * scaleX - parseFloat(circle.getAttribute('cx'));
+            offsetY = (e.clientY - rect.top) * scaleY - parseFloat(circle.getAttribute('cy'));
+            svg.addEventListener('mousemove', drag);
+            svg.addEventListener('mouseup', stopDragging);
+        }
+
+        function drag(e) {
+            e.preventDefault();
+            if (!draggedNode) return;
+            const rect = svg.getBoundingClientRect();
+            const scaleX = viewBoxWidth / rect.width;
+            const scaleY = viewBoxHeight / rect.height;
+            const x = (e.clientX - rect.left) * scaleX - offsetX;
+            const y = (e.clientY - rect.top) * scaleY - offsetY;
+
+            const circle = draggedNode.querySelector('circle');
+            const text = draggedNode.querySelector('text');
+            circle.setAttribute('cx', x);
+            circle.setAttribute('cy', y);
+            text.setAttribute('x', x);
+            text.setAttribute('y', y);
+
+            const tspans = text.querySelectorAll('tspan');
+            tspans.forEach((tspan, index) => {
+                tspan.setAttribute('x', x);
+                tspan.setAttribute('dy', index === 0 ? `${- (tspans.length - 1) * 7}px` : '14px');
+            });
+
+            const id = draggedNode.getAttribute('data-id');
+            nodeData[id].x = x;
+            nodeData[id].y = y;
+            updateArrows();
+        }
+
+        function stopDragging() {
+            draggedNode = null;
+            svg.removeEventListener('mousemove', drag);
+            svg.removeEventListener('mouseup', stopDragging);
+        }
+
+        function startDraggingTouch(e) {
+            e.preventDefault();
+            if (e.touches.length !== 1) return;
+            draggedNode = e.currentTarget;
+            const rect = svg.getBoundingClientRect();
+            const scaleX = viewBoxWidth / rect.width;
+            const scaleY = viewBoxHeight / rect.height;
+            const touchX = e.touches[0].clientX - rect.left;
+            const touchY = e.touches[0].clientY - rect.top;
+            const circle = draggedNode.querySelector('circle');
+            offsetX = touchX * scaleX - parseFloat(circle.getAttribute('cx'));
+            offsetY = touchY * scaleY - parseFloat(circle.getAttribute('cy'));
+            svg.addEventListener('touchmove', dragTouch);
+            svg.addEventListener('touchend', stopDraggingTouch);
+        }
+
+        function dragTouch(e) {
+            e.preventDefault();
+            if (!draggedNode || e.touches.length !== 1) return;
+            const rect = svg.getBoundingClientRect();
+            const scaleX = viewBoxWidth / rect.width;
+            const scaleY = viewBoxHeight / rect.height;
+            const touchX = e.touches[0].clientX - rect.left;
+            const touchY = e.touches[0].clientY - rect.top;
+            const x = touchX * scaleX - offsetX;
+            const y = touchY * scaleY - offsetY;
+
+            const circle = draggedNode.querySelector('circle');
+            const text = draggedNode.querySelector('text');
+            circle.setAttribute('cx', x);
+            circle.setAttribute('cy', y);
+            text.setAttribute('x', x);
+            text.setAttribute('y', y);
+
+            const tspans = text.querySelectorAll('tspan');
+            tspans.forEach((tspan, index) => {
+                tspan.setAttribute('x', x);
+                tspan.setAttribute('dy', index === 0 ? `${- (tspans.length - 1) * 7}px` : '14px');
+            });
+
+            const id = draggedNode.getAttribute('data-id');
+            nodeData[id].x = x;
+            nodeData[id].y = y;
+            updateArrows();
+        }
+
+        function stopDraggingTouch() {
+            draggedNode = null;
+            svg.removeEventListener('touchmove', dragTouch);
+            svg.removeEventListener('touchend', stopDraggingTouch);
+        }
+
+        function addCircle() {
+            const id = `node-${nextNodeId++}`;
+            const centerX = viewBoxWidth / 2 + viewBoxX;
+            const centerY = viewBoxHeight / 2 + viewBoxY;
+            nodeData[id] = { x: centerX, y: centerY, r: 50, text: `new circle ${nextNodeId}`, class: 'node-job-loss' };
+            addNodeToSVG(id);
+            updateArrows();
+        }
+
+        function findNodeAtPoint(clientX, clientY) {
+            const rect = svg.getBoundingClientRect();
+            const scaleX = viewBoxWidth / rect.width;
+            const scaleY = viewBoxHeight / rect.height;
+            const x = (clientX - rect.left) * scaleX + viewBoxX;
+            const y = (clientY - rect.top) * scaleY + viewBoxY;
+
+            for (const id in nodeData) {
+                const node = nodeData[id];
+                const dx = x - node.x;
+                const dy = y - node.y;
+                if (Math.sqrt(dx * dx + dy * dy) <= node.r) {
+                    return id;
+                }
+            }
+            return null;
+        }
+
+        function selectCircle(id) {
+            selectedCircle = id;
+            selectedArrow = null;
+            addingArrow = false;
+            arrowPrompt.style.display = 'none';
+            updateMenuOptions();
+        }
+
+        function selectArrow(id) {
+            selectedArrow = id;
+            selectedCircle = null;
+            addingArrow = false;
+            arrowPrompt.style.display = 'none';
+            updateMenuOptions();
+        }
+
+        function startAddingArrowFromCircle() {
+            if (!selectedCircle) return;
+            addingArrow = true;
+            arrowPrompt.style.display = 'block';
+            updateMenuOptions();
+        }
+
+        function createArrowToCircle(targetCircleId) {
+            if (targetCircleId && targetCircleId !== selectedCircle) {
+                const id = `arrow-${nextArrowId++}`;
+                connections.push({ id, from: selectedCircle, to: targetCircleId, label: '+' });
+                updateArrows();
+                selectArrow(id);
+                stopAddingArrowFromCircle();
+            }
+        }
+
+        function stopAddingArrowFromCircle() {
+            addingArrow = false;
+            arrowPrompt.style.display = 'none';
+            updateMenuOptions();
+        }
+
+        function editNodeText(id) {
+            const popup = document.createElement('div');
+            popup.className = 'popup';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = nodeData[id].text;
+            const okButton = document.createElement('button');
+            okButton.textContent = 'OK';
+            okButton.onclick = () => {
+                const newText = input.value;
+                if (newText) {
+                    nodeData[id].text = newText.toLowerCase();
+                    const group = nodesGroup.querySelector(`[data-id="${id}"]`);
+                    const textElement = group.querySelector('text');
+                    textElement.innerHTML = '';
+                    const maxWidth = nodeData[id].r * 1.5;
+                    const lines = wrapText(newText.toLowerCase(), maxWidth);
+                    lines.forEach((line, index) => {
+                        const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                        tspan.setAttribute('x', nodeData[id].x);
+                        tspan.setAttribute('dy', index === 0 ? `${- (lines.length - 1) * 7}px` : '14px');
+                        tspan.textContent = line;
+                        textElement.appendChild(tspan);
+                    });
+                }
+                document.body.removeChild(popup);
+            };
+            popup.appendChild(input);
+            popup.appendChild(okButton);
+            document.body.appendChild(popup);
+            input.focus();
+        }
+
+        function closeEditPopup() {
+            const popup = document.querySelector('.popup');
+            if (popup) {
+                document.body.removeChild(popup);
+            }
+        }
+
+        function updateMenuOptions() {
+            menuOptions.innerHTML = '';
+            if (selectedCircle) {
+                const changeColorBtn = document.createElement('button');
+                changeColorBtn.textContent = 'Change Color';
+                changeColorBtn.onclick = changeCircleColor;
+                menuOptions.appendChild(changeColorBtn);
+
+                const editTextBtn = document.createElement('button');
+                editTextBtn.textContent = 'Edit Text';
+                editTextBtn.onclick = () => editNodeText(selectedCircle);
+                menuOptions.appendChild(editTextBtn);
+
+                const addArrowBtn = document.createElement('button');
+                addArrowBtn.textContent = 'Add Arrow';
+                addArrowBtn.onclick = startAddingArrowFromCircle;
+                menuOptions.appendChild(addArrowBtn);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.onclick = deleteCircle;
+                menuOptions.appendChild(deleteBtn);
+            } else if (selectedArrow) {
+                const changeDirectionBtn = document.createElement('button');
+                changeDirectionBtn.textContent = 'Reverse';
+                changeDirectionBtn.onclick = changeArrowDirection;
+                menuOptions.appendChild(changeDirectionBtn);
+
+                const toggleLabelBtn = document.createElement('button');
+                toggleLabelBtn.textContent = 'Toggle +/-';
+                toggleLabelBtn.onclick = toggleArrowLabel;
+                menuOptions.appendChild(toggleLabelBtn);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.onclick = deleteArrow;
+                menuOptions.appendChild(deleteBtn);
+            }
+        }
+
+        function changeCircleColor() {
+            if (!selectedCircle) return;
+            const node = nodeData[selectedCircle];
+            const colors = ['node-automation', 'node-black', 'node-job-loss', 'node-tax-revenue'];
+            const currentIndex = colors.indexOf(node.class);
+            node.class = colors[(currentIndex + 1) % colors.length];
+            const group = nodesGroup.querySelector(`[data-id="${selectedCircle}"]`);
+            const circle = group.querySelector('circle');
+            circle.setAttribute('class', `node ${node.class}`);
+        }
+
+        function deleteCircle() {
+            if (!selectedCircle) return;
+            delete nodeData[selectedCircle];
+            const group = nodesGroup.querySelector(`[data-id="${selectedCircle}"]`);
+            nodesGroup.removeChild(group);
+            connections = connections.filter(conn => conn.from !== selectedCircle && conn.to !== selectedCircle);
+            selectedCircle = null;
+            updateMenuOptions();
+            updateArrows();
+        }
+
+        function changeArrowDirection() {
+            if (!selectedArrow) return;
+            const conn = connections.find(c => c.id === selectedArrow);
+            if (conn) {
+                [conn.from, conn.to] = [conn.to, conn.from];
+                updateArrows();
+            }
+        }
+
+        function toggleArrowLabel() {
+            if (!selectedArrow) return;
+            const conn = connections.find(c => c.id === selectedArrow);
+            if (conn) {
+                conn.label = conn.label === '+' ? '-' : '+';
+                updateArrows();
+            }
+        }
+
+        function deleteArrow() {
+            if (!selectedArrow) return;
+            connections = connections.filter(conn => conn.id !== selectedArrow);
+            selectedArrow = null;
+            updateMenuOptions();
+            updateArrows();
+        }
+
+        function saveFlowchart() {
+            const data = {
+                title: title.textContent,
+                subheading: subheading.textContent,
+                nodes: nodeData,
+                connections: connections,
+                nextNodeId: nextNodeId,
+                nextArrowId: nextArrowId,
+                viewBox: { width: viewBoxWidth, height: viewBoxHeight, x: viewBoxX, y: viewBoxY },
+                zoomLevel: zoomLevel
+            };
+            const jsonString = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonString], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'flowchart.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function loadFlowchart(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    nodesGroup.innerHTML = '';
+                    arrowsGroup.innerHTML = '';
+                    arrowLabelsGroup.innerHTML = '';
+                    nodeData = {};
+                    connections = [];
+
+                    title.textContent = data.title || 'Flowchart Title';
+                    subheading.textContent = data.subheading || 'Subheading Text';
+                    nodeData = data.nodes || {};
+                    connections = data.connections || [];
+                    nextNodeId = data.nextNodeId || 1;
+                    nextArrowId = data.nextArrowId || 1;
+
+                    for (const id in nodeData) {
+                        addNodeToSVG(id);
+                    }
+                    updateArrows();
+
+                    // Use saved viewBox if available, otherwise recalculate
+                    if (data.viewBox && data.zoomLevel) {
+                        viewBoxWidth = data.viewBox.width;
+                        viewBoxHeight = data.viewBox.height;
+                        viewBoxX = data.viewBox.x;
+                        viewBoxY = data.viewBox.y;
+                        zoomLevel = data.zoomLevel;
+                    } else {
+                        calculateInitialViewBox();
+                    }
+                    updateViewBox();
+                    updateMenuOptions();
+                } catch (error) {
+                    alert('Invalid file format. Please upload a valid flowchart text file.');
+                    console.error(error);
+                }
+            };
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+</html>
